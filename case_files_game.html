@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>Case Files — A Past Continuous Mystery</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#14181c;
+    --ink-2:#1c2228;
+    --paper:#e9dfc4;
+    --paper-2:#f4ecd8;
+    --red:#a8382c;
+    --red-dark:#7e281f;
+    --gold:#c79a3d;
+    --steel:#7d8b96;
+    --text:#211d16;
+    --line:#c7b78e;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--ink);
+    background-image:
+      radial-gradient(ellipse at 20% -10%, rgba(199,154,61,0.10), transparent 55%),
+      radial-gradient(ellipse at 100% 110%, rgba(168,56,44,0.10), transparent 55%);
+    color:var(--paper);
+    font-family:'Inter',sans-serif;
+    min-height:100vh;
+    -webkit-tap-highlight-color:transparent;
+  }
+  .stamp-font{font-family:'Special Elite',monospace;}
+
+  /* ---------- layout shells ---------- */
+  #app{max-width:520px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;}
+  .screen{display:none;flex:1;flex-direction:column;}
+  .screen.active{display:flex;}
+
+  /* ---------- HOME ---------- */
+  #screen-home{align-items:center;justify-content:center;padding:32px 24px;text-align:center;}
+  .badge-eyebrow{
+    letter-spacing:.18em;text-transform:uppercase;font-size:11px;color:var(--gold);
+    border:1px solid rgba(199,154,61,.4);border-radius:999px;padding:5px 14px;display:inline-block;margin-bottom:18px;
+  }
+  h1.title{
+    font-family:'Special Elite',monospace;font-size:clamp(30px,8vw,44px);line-height:1.05;
+    margin:0 0 10px;color:var(--paper-2);
+  }
+  .subtitle{color:var(--steel);font-size:15px;max-width:360px;margin:0 auto 30px;line-height:1.5;}
+  .pick-label{font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:14px;}
+  .suspect-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;width:100%;max-width:340px;}
+  .suspect-btn{
+    aspect-ratio:1/0.85;
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-radius:6px;
+    color:var(--text);
+    font-family:'Special Elite',monospace;
+    font-size:15px;
+    cursor:pointer;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+    box-shadow:0 6px 0 rgba(0,0,0,.35);
+    transition:transform .12s ease, box-shadow .12s ease;
+    position:relative;
+  }
+  .suspect-btn::before{
+    content:"";position:absolute;top:8px;left:8px;right:8px;height:1px;background:var(--line);
+  }
+  .suspect-btn .num{font-size:34px;color:var(--red-dark);}
+  .suspect-btn:active{transform:translateY(4px);box-shadow:0 2px 0 rgba(0,0,0,.35);}
+
+  /* ---------- GAME ---------- */
+  #screen-game{padding:0 0 30px;}
+  .topbar{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:16px 20px;border-bottom:1px solid rgba(199,154,61,.25);
+  }
+  .you-are{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--steel);}
+  .you-badge{
+    display:inline-flex;align-items:center;gap:8px;background:var(--gold);color:#241b06;
+    font-family:'Special Elite',monospace;font-size:14px;padding:6px 12px;border-radius:999px;margin-top:4px;
+  }
+  .switch-link{background:none;border:none;color:var(--steel);font-size:12px;text-decoration:underline;cursor:pointer;padding:0;}
+
+  .case-tabs{display:flex;gap:8px;padding:16px 20px 0;overflow-x:auto;}
+  .case-tab{
+    flex:1;text-align:center;padding:10px 6px;border-radius:8px 8px 0 0;
+    background:rgba(233,223,196,.08);color:var(--steel);
+    font-family:'Special Elite',monospace;font-size:13px;cursor:pointer;border:1px solid transparent;white-space:nowrap;
+  }
+  .case-tab.active{background:var(--paper);color:var(--text);border-color:var(--line);border-bottom-color:var(--paper);}
+
+  .folder{
+    background:var(--paper);color:var(--text);margin:0 16px;border-radius:0 8px 8px 8px;
+    padding:22px 20px 26px;box-shadow:0 10px 26px rgba(0,0,0,.35);
+  }
+  .case-heading{display:flex;align-items:center;gap:12px;margin-bottom:6px;}
+  .case-icon{width:44px;height:44px;flex:0 0 44px;color:var(--red);}
+  .case-title{font-family:'Special Elite',monospace;font-size:19px;line-height:1.25;color:var(--red-dark);}
+  .case-sub{font-size:12px;color:var(--steel);margin:0 0 16px;}
+
+  .alibi-label{
+    font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--red-dark);
+    display:flex;align-items:center;gap:8px;margin-bottom:8px;
+  }
+  .alibi-label::after{content:"";flex:1;height:1px;background:var(--line);}
+  .alibi-card{
+    background:var(--paper-2);border:1px solid var(--line);border-radius:6px;padding:16px 16px;
+    font-size:18px;line-height:1.55;font-weight:500;
+  }
+  .alibi-hint{font-size:12px;color:var(--steel);margin-top:10px;line-height:1.5;}
+
+  details.notes{margin-top:18px;border-top:1px dashed var(--line);padding-top:14px;}
+  details.notes summary{cursor:pointer;font-size:12.5px;color:var(--steel);letter-spacing:.02em;}
+  .evidence-list{margin:10px 0 0;padding-left:18px;font-size:13.5px;color:var(--text);line-height:1.6;}
+
+  .deduction{margin:16px 4px 0;}
+  .deduction-label{font-size:12px;color:var(--steel);margin-bottom:6px;}
+  textarea{
+    width:100%;min-height:64px;border-radius:6px;border:1px solid var(--line);
+    background:rgba(255,255,255,.5);padding:10px;font-family:'Inter',sans-serif;font-size:14px;resize:vertical;
+  }
+  .footer-nav{display:flex;justify-content:space-between;padding:18px 16px 0;gap:10px;}
+  .nav-btn{
+    flex:1;background:var(--ink-2);color:var(--paper-2);border:1px solid rgba(199,154,61,.3);
+    border-radius:8px;padding:12px;font-size:13px;font-family:'Inter',sans-serif;font-weight:600;cursor:pointer;
+  }
+  .nav-btn:disabled{opacity:.35;}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- HOME SCREEN -->
+  <section id="screen-home" class="screen active">
+    <div class="badge-eyebrow">Past Continuous · Detective Unit</div>
+    <h1 class="title">CASE FILES</h1>
+    <p class="subtitle">Four crimes. Four suspects. Every group has the same suspects — but only YOU know your own alibi. Listen carefully when the others speak.</p>
+    <div class="pick-label">Choose your suspect number</div>
+    <div class="suspect-grid" id="suspectGrid"></div>
+  </section>
+
+  <!-- GAME SCREEN -->
+  <section id="screen-game" class="screen">
+    <div class="topbar">
+      <div>
+        <div class="you-are">You are</div>
+        <div class="you-badge">🕵️ Suspect <span id="youNum"></span></div>
+      </div>
+      <button class="switch-link" id="switchBtn">switch suspect</button>
+    </div>
+
+    <div class="case-tabs" id="caseTabs"></div>
+
+    <div class="folder" id="folder"></div>
+
+    <div class="footer-nav">
+      <button class="nav-btn" id="prevBtn">← Previous Case</button>
+      <button class="nav-btn" id="nextBtn">Next Case →</button>
+    </div>
+  </section>
+
+</div>
+
+<script>
+/* ---------------- CASE DATA ---------------- */
+const ICONS = {
+  window: `<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><rect x="10" y="8" width="44" height="48" rx="2"/><line x1="32" y1="8" x2="32" y2="56"/><line x1="10" y1="32" x2="54" y2="32"/><path d="M20 8 L28 32 L18 32 L30 56" stroke-width="2"/><line x1="4" y1="4" x2="0" y2="12"/><line x1="12" y1="2" x2="8" y2="10"/><line x1="58" y1="4" x2="54" y2="12"/></svg>`,
+  cake: `<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><rect x="12" y="30" width="40" height="24" rx="2"/><path d="M12 40 h40"/><line x1="24" y1="30" x2="24" y2="18"/><line x1="32" y1="30" x2="32" y2="16"/><line x1="40" y1="30" x2="40" y2="18"/><path d="M22 18 q2 -4 4 0" /><path d="M30 16 q2 -4 4 0"/><path d="M38 18 q2 -4 4 0"/><circle cx="52" cy="56" r="2" fill="currentColor" stroke="none"/><circle cx="45" cy="59" r="2" fill="currentColor" stroke="none"/><circle cx="38" cy="61" r="2" fill="currentColor" stroke="none"/></svg>`,
+  safe: `<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="8" width="48" height="48" rx="4"/><circle cx="32" cy="32" r="11"/><circle cx="32" cy="32" r="2.5" fill="currentColor" stroke="none"/><line x1="32" y1="24" x2="32" y2="21"/><line x1="43" y1="14" x2="47" y2="10"/><line x1="14" y1="50" x2="10" y2="54"/></svg>`,
+  stadium: `<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 44 C6 24 20 14 32 14 C44 14 58 24 58 44"/><path d="M6 44 h52"/><path d="M14 44 v8 M50 44 v8"/><path d="M2 20 q6 -4 10 0" stroke-width="2"/><path d="M46 12 q6 -4 10 0" stroke-width="2"/><path d="M50 30 l10 -2 v6 z" fill="currentColor" stroke="none"/></svg>`
+};
+
+const CASES = [
+  {
+    id: 1,
+    title: "The Broken Window",
+    location: "City Library, 3:00pm",
+    icon: "window",
+    evidence: [
+      "The library window broke at 3:00pm.",
+      "It was raining heavily at the time.",
+      "A witness heard loud music playing nearby.",
+      "A red bicycle was seen parked outside the library."
+    ],
+    guilty: 3,
+    suspects: {
+      1: "At 3:00pm, I was walking home from school. It was raining, so I was walking very fast. I wasn't carrying an umbrella.",
+      2: "At 3:00pm, I was riding my red bicycle to my friend's house. The rain was making the road wet, so I was riding slowly.",
+      3: "At 3:00pm, I was sitting outside in the sun, reading a book in the park.",
+      4: "At 3:00pm, I was doing homework in my bedroom. My neighbor was playing very loud music, and I couldn't concentrate."
+    }
+  },
+  {
+    id: 2,
+    title: "The Missing Cake",
+    location: "The Alvarez House, 6:15pm",
+    icon: "cake",
+    evidence: [
+      "The birthday cake disappeared from the kitchen table between 6:00–6:30pm.",
+      "There was a blackout — the kitchen light was off the whole time.",
+      "Chocolate footprints led from the kitchen to the garden.",
+      "The family dog was barking loudly during that time."
+    ],
+    guilty: 2,
+    suspects: {
+      1: "At 6:15pm, I was watching TV in the living room. I remember the dog was barking loudly outside.",
+      2: "At 6:15pm, I was reading a magazine in the kitchen. I was turning the pages under the kitchen light.",
+      3: "At 6:15pm, I was walking in the garden. I wasn't wearing any shoes because the grass was warm.",
+      4: "At 6:15pm, I was doing my homework in my bedroom. I was wearing headphones, so I didn't hear anything."
+    }
+  },
+  {
+    id: 3,
+    title: "The Office Theft",
+    location: "Meridian Insurance, 1:10pm",
+    icon: "safe",
+    evidence: [
+      "Money disappeared from the office safe between 1:00–1:15pm.",
+      "The security camera in the office was broken all day — no video exists.",
+      "Most staff were on their lunch break at that time.",
+      "A coworker remembers smelling fresh coffee brewing nearby."
+    ],
+    guilty: 4,
+    suspects: {
+      1: "At 1:10pm, I was eating lunch outside with my coworkers. We were sitting near the front door.",
+      2: "At 1:10pm, I was making coffee in the break room. I was talking to another coworker at the same time.",
+      3: "At 1:10pm, I was talking on the phone in the meeting room. It was a long call with a client.",
+      4: "At 1:10pm, I was watching the security camera video in my office, checking who was coming in."
+    }
+  },
+  {
+    id: 4,
+    title: "The Concert Ticket Scam",
+    location: "Riverside Stadium, 7:15pm",
+    icon: "stadium",
+    evidence: [
+      "Fake tickets were sold outside the stadium between 7:00–7:30pm.",
+      "It was a very windy evening — a banner blew off the stadium wall.",
+      "The seller was wearing a blue jacket.",
+      "Witnesses heard the seller talking on the phone in English."
+    ],
+    guilty: 1,
+    suspects: {
+      1: "At 7:15pm, I was standing near the stadium, but I was wearing my red jacket, not a blue one.",
+      2: "At 7:15pm, I was talking on the phone with my mother in English. I was walking toward the stadium.",
+      3: "At 7:15pm, I was inside the stadium already, watching the sound check with my friends.",
+      4: "At 7:15pm, I was standing outside, holding onto my hat because it was so windy."
+    }
+  }
+];
+
+/* ---------------- STATE (in-memory only) ---------------- */
+let mySuspect = null;
+let caseIndex = 0;
+
+/* ---------------- RENDER: HOME ---------------- */
+const suspectGrid = document.getElementById('suspectGrid');
+[1,2,3,4].forEach(n=>{
+  const b = document.createElement('button');
+  b.className = 'suspect-btn';
+  b.innerHTML = `<span class="num">${n}</span><span>SUSPECT</span>`;
+  b.addEventListener('click', ()=> chooseSuspect(n));
+  suspectGrid.appendChild(b);
+});
+
+function chooseSuspect(n){
+  mySuspect = n;
+  caseIndex = 0;
+  document.getElementById('youNum').textContent = n;
+  showScreen('screen-game');
+  renderTabs();
+  renderCase();
+}
+
+document.getElementById('switchBtn').addEventListener('click', ()=>{
+  mySuspect = null;
+  showScreen('screen-home');
+});
+
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+/* ---------------- RENDER: GAME ---------------- */
+function renderTabs(){
+  const tabs = document.getElementById('caseTabs');
+  tabs.innerHTML = '';
+  CASES.forEach((c, i)=>{
+    const t = document.createElement('div');
+    t.className = 'case-tab' + (i===caseIndex ? ' active' : '');
+    t.textContent = 'Case ' + c.id;
+    t.addEventListener('click', ()=>{ caseIndex = i; renderTabs(); renderCase(); });
+    tabs.appendChild(t);
+  });
+}
+
+function renderCase(){
+  const c = CASES[caseIndex];
+  const alibi = c.suspects[mySuspect];
+  const folder = document.getElementById('folder');
+  folder.innerHTML = `
+    <div class="case-heading">
+      <div class="case-icon">${ICONS[c.icon]}</div>
+      <div>
+        <div class="case-title">Case ${c.id}: ${c.title}</div>
+        <div class="case-sub">${c.location}</div>
+      </div>
+    </div>
+
+    <div class="alibi-label">Your Alibi — Read Aloud</div>
+    <div class="alibi-card">${alibi}</div>
+    <p class="alibi-hint">Read this to your group when the detective asks where you were. Then listen closely to the other three suspects — one of them is lying.</p>
+
+    <details class="notes">
+      <summary>Show case evidence (if your teacher says it's OK)</summary>
+      <ul class="evidence-list">
+        ${c.evidence.map(e=>`<li>${e}</li>`).join('')}
+      </ul>
+    </details>
+
+    <div class="deduction">
+      <div class="deduction-label">Your notes — who do you suspect, and why?</div>
+      <textarea placeholder="e.g. Suspect 3 is lying because they said..."></textarea>
+    </div>
+  `;
+
+  document.getElementById('prevBtn').disabled = caseIndex === 0;
+  document.getElementById('nextBtn').disabled = caseIndex === CASES.length - 1;
+}
+
+document.getElementById('prevBtn').addEventListener('click', ()=>{
+  if(caseIndex > 0){ caseIndex--; renderTabs(); renderCase(); }
+});
+document.getElementById('nextBtn').addEventListener('click', ()=>{
+  if(caseIndex < CASES.length - 1){ caseIndex++; renderTabs(); renderCase(); }
+});
+</script>
+</body>
+</html>
