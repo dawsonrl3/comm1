@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Grammar Activity — Interrupted Summer Stories</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:      #1e1206;
+    --surface: #2a1a0c;
+    --surface2:#352111;
+    --border:  #4a3018;
+    --accent:  #fb923c;
+    --gold:    #fde047;
+    --white:   #FFFFFF;
+    --light:   #f0d9be;
+    --muted:   #b08862;
+    --success: #4CAF7D;
+    --error:   #E05C5C;
+    --A:       #fb923c;
+    --B:       #38bdf8;
+    --Sam:     #c084fc;
+    --Ken:     #34d399;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Sora', sans-serif; background: var(--bg); color: var(--white); min-height: 100vh; padding-bottom: 60px; }
+
+  .header { background: linear-gradient(135deg, #1e1206 0%, #2a1a0c 100%); border-bottom: 1px solid var(--border); padding: 24px 20px 18px; text-align: center; }
+  .header-label { font-size: 0.62rem; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent); margin-bottom: 5px; }
+  .header h1 { font-family: 'Lora', serif; font-size: 1.2rem; font-weight: 600; line-height: 1.3; margin-bottom: 2px; }
+  .header .sub { font-size: 0.72rem; color: var(--muted); font-style: italic; }
+
+  .steps { display: flex; justify-content: center; align-items: center; padding: 12px 8px 0; overflow-x: auto; }
+  .step { display: flex; align-items: center; gap: 4px; font-size: 0.55rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); transition: color 0.3s; white-space: nowrap; }
+  .step.active { color: var(--accent); }
+  .step.done   { color: var(--success); }
+  .step-dot { width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 0.54rem; font-weight: 700; background: var(--surface); transition: all 0.3s; }
+  .step.active .step-dot { border-color: var(--accent); color: var(--accent); }
+  .step.done   .step-dot { border-color: var(--success); background: var(--success); color: #fff; }
+  .step-line { width: 20px; height: 2px; background: var(--border); margin: 0 4px; }
+
+  .screen { display: none; padding: 18px; max-width: 540px; margin: 0 auto; }
+  .screen.active { display: block; animation: fadeUp 0.3s ease both; }
+  @keyframes fadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+
+  .sec-label { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); margin: 18px 0 9px; }
+  .instr { background: rgba(251,146,60,0.06); border: 1px solid rgba(251,146,60,0.18); border-radius: 12px; padding: 12px 14px; margin-bottom: 14px; font-size: 0.78rem; color: #f0c090; line-height: 1.6; }
+  .instr strong { color: var(--accent); }
+
+  .field { margin-bottom: 11px; }
+  .field label { display: block; font-size: 0.63rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 5px; }
+  .field input { width: 100%; background: var(--surface2); border: 1.5px solid var(--border); border-radius: 10px; padding: 11px 14px; color: var(--white); font-family: 'Sora', sans-serif; font-size: 0.88rem; outline: none; transition: border-color 0.2s; -webkit-appearance: none; }
+  .field input:focus { border-color: var(--accent); }
+
+  .partner-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 6px; }
+  .partner-btn { background: var(--surface2); border: 2px solid var(--border); border-radius: 14px; padding: 16px 10px; text-align: center; cursor: pointer; transition: all 0.2s; color: var(--white); }
+  .partner-btn.sel-A { border-color: var(--A); background: rgba(251,146,60,0.07); }
+  .partner-btn.sel-B { border-color: var(--B); background: rgba(56,189,248,0.07); }
+  .partner-letter { font-size: 1.9rem; font-family: 'Lora', serif; font-weight: 600; margin-bottom: 4px; }
+  .pa { color: var(--A); } .pb { color: var(--B); }
+  .partner-desc { font-size: 0.68rem; color: var(--muted); line-height: 1.45; }
+
+  /* Chat bubbles */
+  .chat-label { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin: 16px 0 8px; text-align: center; }
+  .bubble-row { display: flex; margin-bottom: 10px; }
+  .bubble-row.A, .bubble-row.Sam { justify-content: flex-start; }
+  .bubble-row.B, .bubble-row.Ken { justify-content: flex-end; }
+  .bubble { max-width: 80%; border-radius: 14px; padding: 10px 13px; font-family: 'Lora', serif; font-size: 0.84rem; line-height: 1.5; }
+  .bubble.A { background: rgba(251,146,60,0.14); border: 1px solid rgba(251,146,60,0.3); color: var(--light); border-bottom-left-radius: 3px; }
+  .bubble.B { background: rgba(56,189,248,0.14); border: 1px solid rgba(56,189,248,0.3); color: var(--light); border-bottom-right-radius: 3px; }
+  .bubble.Sam { background: rgba(192,132,252,0.14); border: 1px solid rgba(192,132,252,0.3); color: var(--light); border-bottom-left-radius: 3px; }
+  .bubble.Ken { background: rgba(52,211,153,0.14); border: 1px solid rgba(52,211,153,0.3); color: var(--light); border-bottom-right-radius: 3px; }
+  .bubble-speaker { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 4px; }
+  .bubble-speaker.A { color: var(--A); }
+  .bubble-speaker.B { color: var(--B); }
+  .bubble-speaker.Sam { color: var(--Sam); }
+  .bubble-speaker.Ken { color: var(--Ken); }
+
+  select.blank-sel { display: inline-block; width: auto; min-width: 84px; background: var(--surface2); border: 1.5px solid var(--accent); border-radius: 7px; color: var(--accent); font-family: 'Sora', sans-serif; font-size: 0.76rem; font-weight: 600; padding: 3px 22px 3px 8px; outline: none; cursor: pointer; -webkit-appearance: none; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23fb923c'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 6px center; margin: 0 2px; }
+  select.blank-sel.correct { border-color: var(--success); color: var(--success); background-color: rgba(76,175,125,0.1); background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%234CAF7D'/%3E%3C/svg%3E"); }
+  select.blank-sel.wrong { border-color: var(--error); color: var(--error); background-color: rgba(224,92,92,0.1); background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23E05C5C'/%3E%3C/svg%3E"); }
+  select.blank-sel option { background: #352111; color: var(--white); }
+
+  .btn { width: 100%; padding: 13px; border: none; border-radius: 12px; font-family: 'Sora', sans-serif; font-size: 0.86rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+  .btn-primary { background: var(--accent); color: #1e1206; }
+  .btn-primary:hover { opacity: 0.88; transform: translateY(-1px); }
+  .btn-primary:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
+  .btn-ghost { background: transparent; border: 1.5px solid var(--border); color: var(--muted); margin-top: 9px; }
+  .btn-ghost:hover { border-color: var(--muted); color: var(--white); }
+
+  .total-box { background: var(--surface2); border: 1.5px solid var(--accent); border-radius: 14px; padding: 16px; text-align: center; margin-bottom: 14px; }
+  .total-label { font-size: 0.62rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); margin-bottom: 6px; }
+  .total-num   { font-family: 'Lora', serif; font-size: 2.6rem; font-weight: 600; line-height: 1; }
+  .total-denom { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
+
+  .split-scores { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+  .split-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px 8px; text-align: center; }
+  .split-label { font-size: 0.54rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+  .split-num   { font-family: 'Lora', serif; font-size: 1.4rem; font-weight: 600; }
+  .split-denom { font-size: 0.6rem; color: var(--muted); }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px; margin-bottom: 12px; }
+  .review-row { display: flex; align-items: flex-start; gap: 9px; padding: 9px 0; border-bottom: 1px solid var(--border); }
+  .review-row:last-child { border-bottom: none; }
+  .review-num { min-width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.62rem; font-weight: 700; margin-top: 1px; flex-shrink: 0; }
+  .rn-ok  { background: rgba(76,175,125,0.18); color: var(--success); }
+  .rn-bad { background: rgba(224,92,92,0.18);  color: var(--error); }
+  .review-body { flex: 1; }
+  .review-label  { font-size: 0.66rem; color: var(--muted); margin-bottom: 2px; }
+  .review-answer { font-weight: 600; font-size: 0.82rem; }
+  .rev-ok  { color: var(--success); }
+  .rev-bad { color: var(--error); }
+  .review-correct { font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
+  .review-correct span { color: var(--success); font-weight: 600; }
+
+  #sheetStatus { text-align: center; font-size: 0.72rem; color: var(--muted); padding: 8px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-label">Grammar Speaking Activity</div>
+  <h1>Interrupted Summer Stories</h1>
+  <p class="sub">Past Simple vs. Past Continuous</p>
+</div>
+
+<div class="steps" id="stepBar">
+  <div class="step active" id="s1"><div class="step-dot">1</div><span>Setup</span></div>
+  <div class="step-line"></div>
+  <div class="step" id="s2"><div class="step-dot">2</div><span>Story 1</span></div>
+  <div class="step-line"></div>
+  <div class="step" id="s3"><div class="step-dot">3</div><span>Story 2</span></div>
+  <div class="step-line"></div>
+  <div class="step" id="s4"><div class="step-dot">4</div><span>Fix It</span></div>
+  <div class="step-line"></div>
+  <div class="step" id="s5"><div class="step-dot">5</div><span>Score</span></div>
+</div>
+
+<!-- ── Screen 1: Setup ── -->
+<div class="screen active" id="screen1">
+  <div class="sec-label">Your details</div>
+  <div class="field"><label>Student Number</label><input type="text" id="studentNumber" placeholder="e.g. 24B001"></div>
+  <div class="field"><label>Name (Romaji)</label><input type="text" id="studentName" placeholder="e.g. Tanaka Yuki"></div>
+  <div class="sec-label">Your partner role</div>
+  <div class="partner-grid">
+    <div class="partner-btn" id="btnA" onclick="selectPartner('A')">
+      <div class="partner-letter pa">A</div>
+      <div class="partner-desc">Read A's lines aloud.<br>Listen and fill in B's blanks.</div>
+    </div>
+    <div class="partner-btn" id="btnB" onclick="selectPartner('B')">
+      <div class="partner-letter pb">B</div>
+      <div class="partner-desc">Read B's lines aloud.<br>Listen and fill in A's blanks.</div>
+    </div>
+  </div>
+  <br>
+  <button class="btn btn-primary" id="btnNext1" onclick="goTo(2)" disabled>Start →</button>
+</div>
+
+<!-- ── Screen 2: Dialogue 1 ── -->
+<div class="screen" id="screen2">
+  <div class="instr" id="s2instr"></div>
+  <div id="chat1Container"></div>
+  <button class="btn btn-primary" onclick="finishChat(1)">Next: Story 2 →</button>
+  <button class="btn btn-ghost" onclick="goTo(1)">← Back</button>
+</div>
+
+<!-- ── Screen 3: Dialogue 2 ── -->
+<div class="screen" id="screen3">
+  <div class="instr" id="s3instr"></div>
+  <div id="chat2Container"></div>
+  <button class="btn btn-primary" onclick="finishChat(2)">Next: Fix the Mistake →</button>
+  <button class="btn btn-ghost" onclick="goTo(2)">← Back</button>
+</div>
+
+<!-- ── Screen 4: Fix the Mistake (individual) ── -->
+<div class="screen" id="screen4">
+  <div class="instr">🔧 <strong>Fix the Mistake.</strong> Read Sam and Ken's conversation. Complete it on your own — choose the correct verb form for each blank.</div>
+  <div id="fixContainer"></div>
+  <button class="btn btn-primary" onclick="submitAll()">Submit & See Score →</button>
+  <button class="btn btn-ghost" onclick="goTo(3)">← Back</button>
+</div>
+
+<!-- ── Screen 5: Score ── -->
+<div class="screen" id="screen5">
+  <div class="total-box">
+    <div class="total-label">Total Score</div>
+    <div class="total-num" id="totalNum">—</div>
+    <div class="total-denom">out of 22</div>
+  </div>
+  <div class="split-scores">
+    <div class="split-card"><div class="split-label">Story 1</div><div class="split-num" id="c1Num">—</div><div class="split-denom">/5</div></div>
+    <div class="split-card"><div class="split-label">Story 2</div><div class="split-num" id="c2Num">—</div><div class="split-denom">/5</div></div>
+    <div class="split-card"><div class="split-label">Fix It</div><div class="split-num" id="fixNum">—</div><div class="split-denom">/12</div></div>
+  </div>
+  <div class="sec-label">Answer review</div>
+  <div class="card" id="reviewList"></div>
+  <div id="sheetStatus"></div>
+</div>
+
+<script>
+const SHEET_URL = "PASTE_URL_HERE";
+
+// ── Dialogue 1: B tells the beach/spider story, A asks ────────
+const chat1 = [
+  { speaker:'A', text:"Hey! How", blank:{correct:"was",options:["was","were","did"]}, after:"your summer?" },
+  { speaker:'B', text:"It", blank:{correct:"was",options:["was","were","did"]}, after:"great! Something funny happened, actually." },
+  { speaker:'A', text:"Really? What", blank:{correct:"happened",options:["happened","was happening","were happening"]}, after:"?" },
+  { speaker:'B', text:"I lost my sunglasses in the waves while I", blank:{correct:"was swimming",options:["was swimming","were swimming","swam"]}, after:"at the beach." },
+  { speaker:'A', text:"No way! What", blank:{correct:"did",options:["did","was","were"]}, after:"you do?" },
+  { speaker:'B', text:"I looked for them for twenty minutes, but I never", blank:{correct:"found",options:["found","was finding","did find"]}, after:"them." },
+  { speaker:'A', text:"That's too bad.", blank:{correct:"Did",options:["Did","Was","Were"]}, after:"anything else happen this summer?" },
+  { speaker:'B', text:"Yes! I", blank:{correct:"saw",options:["saw","was seeing","did see"]}, after:"a huge spider on the door while I was walking home one night." },
+  { speaker:'A', text:"Ha! What", blank:{correct:"did",options:["did","was","were"]}, after:"you do?" },
+  { speaker:'B', text:"I screamed and", blank:{correct:"ran",options:["ran","was running","did run"]}, after:"to my neighbor's house!" },
+];
+
+// ── Dialogue 2: A tells the movie/coffee story, B asks ─────────
+const chat2 = [
+  { speaker:'B', text:"How", blank:{correct:"was",options:["was","were","did"]}, after:"your summer?" },
+  { speaker:'A', text:"It", blank:{correct:"was",options:["was","were","did"]}, after:"great! Something crazy happened, actually." },
+  { speaker:'B', text:"Really? What", blank:{correct:"happened",options:["happened","was happening","were happening"]}, after:"?" },
+  { speaker:'A', text:"The power went out while I", blank:{correct:"was watching",options:["was watching","were watching","watched"]}, after:"a movie." },
+  { speaker:'B', text:"No way! What", blank:{correct:"did",options:["did","was","were"]}, after:"you do?" },
+  { speaker:'A', text:"I lit some candles and", blank:{correct:"waited",options:["waited","was waiting","did wait"]}, after:"until it came back." },
+  { speaker:'B', text:"That's funny.", blank:{correct:"Did",options:["Did","Was","Were"]}, after:"anything else happen this summer?" },
+  { speaker:'A', text:"Yes! I", blank:{correct:"spilled",options:["spilled","was spilling","did spill"]}, after:"coffee on my laptop while I was studying at a caf\u00e9." },
+  { speaker:'B', text:"Oh no! What", blank:{correct:"did",options:["did","was","were"]}, after:"you do?" },
+  { speaker:'A', text:"I wiped it off quickly, but the keyboard", blank:{correct:"stopped",options:["stopped","was stopping","did stop"]}, after:"working for a while." },
+];
+
+// ── Fix the Mistake: Sam & Ken dialogue, 12 blanks (individual) ──
+const fixChat = [
+  { speaker:'Sam', text:"Did anything interesting happen to you this summer?", blank:null, after:"" },
+  { speaker:'Ken', text:"Yes! I", blank:{correct:"was hiking",options:["was hiking","were hiking","hiked"]}, after:"in the mountains when it", blank2:{correct:"started",options:["started","was starting","did start"]}, after2:"to rain." },
+  { speaker:'Sam', text:"Oh no, were you prepared?", blank:null, after:"" },
+  { speaker:'Ken', text:"Not really! Something else happened too. I", blank:{correct:"dropped",options:["dropped","was dropping","did drop"]}, after:"my phone while I", blank2:{correct:"was eating",options:["was eating","were eating","ate"]}, after2:"at a festival." },
+  { speaker:'Sam', text:"That's rough. Did you break it?", blank:null, after:"" },
+  { speaker:'Ken', text:"No, luckily not. Also, I", blank:{correct:"was swimming",options:["was swimming","were swimming","swam"]}, after:"at the beach when I", blank2:{correct:"saw",options:["saw","was seeing","did see"]}, after2:"a jellyfish." },
+  { speaker:'Sam', text:"Yikes! Anything else?", blank:null, after:"" },
+  { speaker:'Ken', text:"One more! I", blank:{correct:"heard",options:["heard","was hearing","did hear"]}, after:"a strange noise while I", blank2:{correct:"was camping",options:["was camping","were camping","camped"]}, after2:"with friends." },
+  { speaker:'Sam', text:"That sounds scary. What about your bike trip?", blank:null, after:"" },
+  { speaker:'Ken', text:"Oh right! I", blank:{correct:"was riding",options:["was riding","were riding","rode"]}, after:"my bike when I", blank2:{correct:"got",options:["got","was getting","did get"]}, after2:"a flat tire." },
+  { speaker:'Sam', text:"Busy summer! Any other surprises?", blank:null, after:"" },
+  { speaker:'Ken', text:"Just one. My phone alarm", blank:{correct:"didn't go off",options:["didn't go off","wasn't going off","did go off"]}, after:"while I", blank2:{correct:"was sleeping",options:["was sleeping","were sleeping","slept"]}, after2:"in late." },
+];
+
+// ── State ─────────────────────────────────────────────────────
+let currentScreen = 1;
+let partner  = null;
+let chat1Sel = {};
+let chat2Sel = {};
+let fixSel   = {}; // `${i}_1` / `${i}_2` → value
+let locked   = false;
+
+const LS_KEY = 'summer_stories_state_v2';
+
+function saveState() {
+  const state = { currentScreen, partner, chat1Sel, chat2Sel, fixSel, locked,
+    studentName:   document.getElementById('studentName').value,
+    studentNumber: document.getElementById('studentNumber').value };
+  try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch(e) {}
+}
+function loadState() {
+  try { const raw = localStorage.getItem(LS_KEY); return raw ? JSON.parse(raw) : null; } catch(e) { return null; }
+}
+function clearState() { try { localStorage.removeItem(LS_KEY); } catch(e) {} }
+
+function restoreState(state) {
+  partner  = state.partner;
+  chat1Sel = state.chat1Sel || {};
+  chat2Sel = state.chat2Sel || {};
+  fixSel   = state.fixSel   || {};
+  locked   = state.locked   || false;
+  if (state.studentName)   document.getElementById('studentName').value   = state.studentName;
+  if (state.studentNumber) document.getElementById('studentNumber').value = state.studentNumber;
+  if (partner) {
+    document.getElementById('btnA').className = 'partner-btn' + (partner==='A' ? ' sel-A' : '');
+    document.getElementById('btnB').className = 'partner-btn' + (partner==='B' ? ' sel-B' : '');
+  }
+  checkReady();
+  const n = state.currentScreen || 1;
+  goTo(n);
+  setTimeout(() => {
+    if (n===2) Object.entries(chat1Sel).forEach(([i,v]) => { const el=document.getElementById(`c1_${i}`); if(el) el.value=v; });
+    if (n===3) Object.entries(chat2Sel).forEach(([i,v]) => { const el=document.getElementById(`c2_${i}`); if(el) el.value=v; });
+    if (n===4) Object.entries(fixSel).forEach(([k,v]) => { const el=document.getElementById(`fix_${k}`); if(el) el.value=v; });
+  }, 120);
+}
+
+// ── Navigation ────────────────────────────────────────────────
+function updateSteps(n) {
+  [1,2,3,4,5].forEach(i => {
+    const el = document.getElementById('s'+i);
+    el.className = 'step' + (i < n ? ' done' : i === n ? ' active' : '');
+    el.querySelector('.step-dot').textContent = i < n ? '✓' : i;
+  });
+}
+function goTo(n) {
+  currentScreen = n;
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen'+n).classList.add('active');
+  updateSteps(n);
+  window.scrollTo(0,0);
+  if (n===2) buildChat(1);
+  if (n===3) buildChat(2);
+  if (n===4) buildFix();
+  saveState();
+}
+
+function selectPartner(p) {
+  partner = p;
+  document.getElementById('btnA').className = 'partner-btn' + (p==='A' ? ' sel-A' : '');
+  document.getElementById('btnB').className = 'partner-btn' + (p==='B' ? ' sel-B' : '');
+  checkReady();
+  saveState();
+}
+function checkReady() {
+  document.getElementById('btnNext1').disabled = !(
+    partner &&
+    document.getElementById('studentName').value.trim() &&
+    document.getElementById('studentNumber').value.trim()
+  );
+}
+document.getElementById('studentName').addEventListener('input', () => { checkReady(); saveState(); });
+document.getElementById('studentNumber').addEventListener('input', () => { checkReady(); saveState(); });
+
+function shuffle(arr) { return arr.slice().sort(() => Math.random() - 0.5); }
+
+// ── Build chat screens (Dialogue 1 & 2) ────────────────────────
+function buildChat(num) {
+  const data = num === 1 ? chat1 : chat2;
+  const containerId = num === 1 ? 'chat1Container' : 'chat2Container';
+  const instrId = num === 1 ? 's2instr' : 's3instr';
+  const prefix = num === 1 ? 'c1' : 'c2';
+  const storyteller = num === 1 ? 'B' : 'A';
+  const label = num === 1 ? "Story 1 \u2014 B's Summer" : "Story 2 \u2014 A's Summer";
+
+  document.getElementById(instrId).innerHTML = partner === storyteller
+    ? `\ud83d\udcac <strong>${label}.</strong> You tell your story! Read your lines aloud. Listen to your partner and fill in their blanks.`
+    : `\ud83d\udcac <strong>${label}.</strong> Your partner tells their story. Read your lines aloud (the questions). Listen and fill in your partner's blanks.`;
+
+  if (document.getElementById(containerId).innerHTML) return;
+
+  let html = `<div class="chat-label">${label}</div>`;
+  data.forEach((line, i) => {
+    const isMine = line.speaker === partner;
+    let content;
+    if (isMine) {
+      content = `${line.text} ${line.blank.correct} ${line.after}`;
+    } else {
+      const opts = shuffle(line.blank.options);
+      const w = Math.max(80, Math.max(...opts.map(o=>o.length)) * 8) + 'px';
+      content = `${line.text} <select class="blank-sel" id="${prefix}_${i}" style="width:${w}" onchange="onChat(${num}, ${i}, this.value)"><option value="">\u2014</option>${opts.map(o=>`<option value="${o}">${o}</option>`).join('')}</select> ${line.after}`;
+    }
+    html += `
+      <div class="bubble-row ${line.speaker}">
+        <div class="bubble ${line.speaker}">
+          <div class="bubble-speaker ${line.speaker}">${line.speaker}</div>
+          ${content}
+        </div>
+      </div>`;
+  });
+  document.getElementById(containerId).innerHTML = html;
+}
+function onChat(num, i, val) {
+  if (num === 1) chat1Sel[i] = val; else chat2Sel[i] = val;
+  saveState();
+}
+function finishChat(num) {
+  const data = num === 1 ? chat1 : chat2;
+  const sel = num === 1 ? chat1Sel : chat2Sel;
+  const missing = data.some((line,i) => line.speaker !== partner && !sel[i]);
+  if (missing) { alert('Please fill in all the blanks you can hear.'); return; }
+  goTo(num === 1 ? 3 : 4);
+}
+
+// ── Build Fix the Mistake (Sam & Ken dialogue, individual) ─────
+function buildFix() {
+  if (document.getElementById('fixContainer').innerHTML) return;
+
+  let html = `<div class="chat-label">Sam &amp; Ken \u2014 Catching Up</div>`;
+  fixChat.forEach((line, i) => {
+    let content;
+    if (!line.blank) {
+      content = line.text;
+    } else {
+      const opts1 = shuffle(line.blank.options);
+      const w1 = Math.max(80, Math.max(...opts1.map(o=>o.length)) * 7.5) + 'px';
+      const sel1 = `<select class="blank-sel" id="fix_${i}_1" style="width:${w1}" onchange="onFix(${i},1,this.value)"><option value="">\u2014</option>${opts1.map(o=>`<option value="${o}">${o}</option>`).join('')}</select>`;
+
+      let sel2 = '';
+      if (line.blank2) {
+        const opts2 = shuffle(line.blank2.options);
+        const w2 = Math.max(80, Math.max(...opts2.map(o=>o.length)) * 7.5) + 'px';
+        sel2 = `<select class="blank-sel" id="fix_${i}_2" style="width:${w2}" onchange="onFix(${i},2,this.value)"><option value="">\u2014</option>${opts2.map(o=>`<option value="${o}">${o}</option>`).join('')}</select>`;
+      }
+      content = `${line.text} ${sel1} ${line.after || ''} ${sel2} ${line.after2 || ''}`;
+    }
+    html += `
+      <div class="bubble-row ${line.speaker}">
+        <div class="bubble ${line.speaker}">
+          <div class="bubble-speaker ${line.speaker}">${line.speaker}</div>
+          ${content}
+        </div>
+      </div>`;
+  });
+  document.getElementById('fixContainer').innerHTML = html;
+}
+function onFix(i, part, val) { fixSel[`${i}_${part}`] = val; saveState(); }
+
+// ── Submit & score ────────────────────────────────────────────
+function submitAll() {
+  const missing = fixChat.some((line,i) => line.blank && (!fixSel[`${i}_1`] || (line.blank2 && !fixSel[`${i}_2`])));
+  if (missing) { alert('Please fill in every blank in the Sam & Ken conversation.'); return; }
+  locked = true;
+
+  const review = [];
+
+  // Story 1
+  let c1Score = 0;
+  chat1.forEach((line,i) => {
+    if (line.speaker === partner) return;
+    const chosen = chat1Sel[i];
+    const ok = chosen === line.blank.correct;
+    if (ok) c1Score++;
+    const sel = document.getElementById(`c1_${i}`);
+    if (sel) sel.className = 'blank-sel ' + (ok ? 'correct' : 'wrong');
+    review.push({ label: `Story 1 \u2014 ${line.speaker}'s line`, chosen, ok, correct: line.blank.correct });
+  });
+
+  // Story 2
+  let c2Score = 0;
+  chat2.forEach((line,i) => {
+    if (line.speaker === partner) return;
+    const chosen = chat2Sel[i];
+    const ok = chosen === line.blank.correct;
+    if (ok) c2Score++;
+    const sel = document.getElementById(`c2_${i}`);
+    if (sel) sel.className = 'blank-sel ' + (ok ? 'correct' : 'wrong');
+    review.push({ label: `Story 2 \u2014 ${line.speaker}'s line`, chosen, ok, correct: line.blank.correct });
+  });
+
+  // Fix the Mistake (Sam & Ken)
+  let fixScore = 0;
+  fixChat.forEach((line,i) => {
+    if (!line.blank) return;
+    const chosen1 = fixSel[`${i}_1`];
+    const ok1 = chosen1 === line.blank.correct;
+    if (ok1) fixScore++;
+    const sel1 = document.getElementById(`fix_${i}_1`);
+    if (sel1) sel1.className = 'blank-sel ' + (ok1 ? 'correct' : 'wrong');
+    review.push({ label: `Fix It \u2014 Ken line ${i} (1)`, chosen: chosen1, ok: ok1, correct: line.blank.correct });
+
+    if (line.blank2) {
+      const chosen2 = fixSel[`${i}_2`];
+      const ok2 = chosen2 === line.blank2.correct;
+      if (ok2) fixScore++;
+      const sel2 = document.getElementById(`fix_${i}_2`);
+      if (sel2) sel2.className = 'blank-sel ' + (ok2 ? 'correct' : 'wrong');
+      review.push({ label: `Fix It \u2014 Ken line ${i} (2)`, chosen: chosen2, ok: ok2, correct: line.blank2.correct });
+    }
+  });
+
+  const total = c1Score + c2Score + fixScore;
+  const pct = Math.round(total/22*100);
+
+  document.getElementById('totalNum').textContent = total + '/22';
+  document.getElementById('c1Num').textContent = c1Score;
+  document.getElementById('c2Num').textContent = c2Score;
+  document.getElementById('fixNum').textContent = fixScore;
+
+  document.getElementById('reviewList').innerHTML = review.map(r => `
+    <div class="review-row">
+      <div class="review-num ${r.ok?'rn-ok':'rn-bad'}">${r.ok?'\u2713':'\u2717'}</div>
+      <div class="review-body">
+        <div class="review-label">${r.label}</div>
+        <div class="review-answer ${r.ok?'rev-ok':'rev-bad'}">Your answer: ${r.chosen || '\u2014'}</div>
+        ${!r.ok?`<div class="review-correct">Correct: <span>${r.correct}</span></div>`:''}
+      </div>
+    </div>`).join('');
+
+  goTo(5);
+  clearState();
+  logToSheets(c1Score, c2Score, fixScore, total, pct, review);
+}
+
+// ── Google Sheets ─────────────────────────────────────────────
+function logToSheets(c1Score, c2Score, fixScore, total, pct, review) {
+  if (!SHEET_URL || SHEET_URL === 'PASTE_URL_HERE') {
+    document.getElementById('sheetStatus').textContent = '\u26a0\ufe0f No gradebook URL set.';
+    return;
+  }
+  document.getElementById('sheetStatus').textContent = '\u23f3 Saving to gradebook\u2026';
+  const name = document.getElementById('studentName').value.trim();
+  const num  = document.getElementById('studentNumber').value.trim();
+  const detail = review.map(r => `${r.label}:${r.chosen||'\u2014'}(${r.ok?'\u2713':'\u2717'})`).join(' | ');
+
+  const payload = JSON.stringify({
+    studentNumber: num, studentName: name, partner,
+    score: total + '/22', percent: pct,
+    story1Score: c1Score + '/5', story2Score: c2Score + '/5', fixScore: fixScore + '/12',
+    response: detail
+  });
+
+  const form = document.createElement('form');
+  form.method = 'POST'; form.action = SHEET_URL; form.target = 'hidden_iframe'; form.style.display = 'none';
+  const input = document.createElement('input');
+  input.type = 'hidden'; input.name = 'data'; input.value = payload;
+  form.appendChild(input);
+  const iframe = document.createElement('iframe');
+  iframe.name = 'hidden_iframe'; iframe.style.display = 'none';
+  iframe.onload = () => { document.getElementById('sheetStatus').textContent = '\u2705 Saved to gradebook.'; };
+  document.body.appendChild(iframe);
+  document.body.appendChild(form);
+  form.submit();
+  setTimeout(() => {
+    const st = document.getElementById('sheetStatus');
+    if (st.textContent.includes('\u23f3')) st.textContent = '\u2705 Saved to gradebook.';
+  }, 3000);
+}
+
+// ── On load ───────────────────────────────────────────────────
+window.addEventListener('load', () => {
+  const state = loadState();
+  if (state && state.currentScreen > 1) restoreState(state);
+});
+</script>
+</body>
+</html>
