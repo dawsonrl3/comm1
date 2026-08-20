@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Grammar Activity — First Day of University</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:      #0d1128;
+    --surface: #161a38;
+    --surface2:#1e2348;
+    --border:  #2c3260;
+    --accent:  #818cf8;
+    --gold:    #fde047;
+    --white:   #FFFFFF;
+    --light:   #d4d7f5;
+    --muted:   #7178ad;
+    --success: #4CAF7D;
+    --error:   #E05C5C;
+    --A:       #818cf8;
+    --B:       #fb7185;
+    --Miki:    #fbbf24;
+    --Jin:     #2dd4bf;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Sora', sans-serif; background: var(--bg); color: var(--white); min-height: 100vh; padding-bottom: 60px; }
+
+  .header { background: linear-gradient(135deg, #0d1128 0%, #161a38 100%); border-bottom: 1px solid var(--border); padding: 24px 20px 18px; text-align: center; }
+  .header-label { font-size: 0.62rem; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: var(--accent); margin-bottom: 5px; }
+  .header h1 { font-family: 'Lora', serif; font-size: 1.2rem; font-weight: 600; line-height: 1.3; margin-bottom: 2px; }
+  .header .sub { font-size: 0.72rem; color: var(--muted); font-style: italic; }
+
+  .steps { display: flex; justify-content: center; align-items: center; padding: 12px 8px 0; overflow-x: auto; }
+  .step { display: flex; align-items: center; gap: 4px; font-size: 0.55rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); transition: color 0.3s; white-space: nowrap; }
+  .step.active { color: var(--accent); }
+  .step.done   { color: var(--success); }
+  .step-dot { width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 0.54rem; font-weight: 700; background: var(--surface); transition: all 0.3s; }
+  .step.active .step-dot { border-color: var(--accent); color: var(--accent); }
+  .step.done   .step-dot { border-color: var(--success); background: var(--success); color: #fff; }
+  .step-line { width: 20px; height: 2px; background: var(--border); margin: 0 4px; }
+
+  .screen { display: none; padding: 18px; max-width: 540px; margin: 0 auto; }
+  .screen.active { display: block; animation: fadeUp 0.3s ease both; }
+  @keyframes fadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+
+  .sec-label { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); margin: 18px 0 9px; }
+  .instr { background: rgba(129,140,248,0.06); border: 1px solid rgba(129,140,248,0.18); border-radius: 12px; padding: 12px 14px; margin-bottom: 14px; font-size: 0.78rem; color: #b8bdf5; line-height: 1.6; }
+  .instr strong { color: var(--accent); }
+
+  .field { margin-bottom: 11px; }
+  .field label { display: block; font-size: 0.63rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 5px; }
+  .field input { width: 100%; background: var(--surface2); border: 1.5px solid var(--border); border-radius: 10px; padding: 11px 14px; color: var(--white); font-family: 'Sora', sans-serif; font-size: 0.88rem; outline: none; transition: border-color 0.2s; -webkit-appearance: none; }
+  .field input:focus { border-color: var(--accent); }
+
+  .partner-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 6px; }
+  .partner-btn { background: var(--surface2); border: 2px solid var(--border); border-radius: 14px; padding: 16px 10px; text-align: center; cursor: pointer; transition: all 0.2s; color: var(--white); }
+  .partner-btn.sel-A { border-color: var(--A); background: rgba(129,140,248,0.07); }
+  .partner-btn.sel-B { border-color: var(--B); background: rgba(251,113,133,0.07); }
+  .partner-letter { font-size: 1.9rem; font-family: 'Lora', serif; font-weight: 600; margin-bottom: 4px; }
+  .pa { color: var(--A); } .pb { color: var(--B); }
+  .partner-desc { font-size: 0.68rem; color: var(--muted); line-height: 1.45; }
+
+  .chat-label { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin: 16px 0 8px; text-align: center; }
+  .bubble-row { display: flex; margin-bottom: 10px; }
+  .bubble-row.A, .bubble-row.Miki { justify-content: flex-start; }
+  .bubble-row.B, .bubble-row.Jin { justify-content: flex-end; }
+  .bubble { max-width: 82%; border-radius: 14px; padding: 10px 13px; font-family: 'Lora', serif; font-size: 0.84rem; line-height: 1.5; }
+  .bubble.A { background: rgba(129,140,248,0.14); border: 1px solid rgba(129,140,248,0.3); color: var(--light); border-bottom-left-radius: 3px; }
+  .bubble.B { background: rgba(251,113,133,0.14); border: 1px solid rgba(251,113,133,0.3); color: var(--light); border-bottom-right-radius: 3px; }
+  .bubble.Miki { background: rgba(251,191,36,0.14); border: 1px solid rgba(251,191,36,0.3); color: var(--light); border-bottom-left-radius: 3px; }
+  .bubble.Jin { background: rgba(45,212,191,0.14); border: 1px solid rgba(45,212,191,0.3); color: var(--light); border-bottom-right-radius: 3px; }
+  .bubble-speaker { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 4px; }
+  .bubble-speaker.A { color: var(--A); }
+  .bubble-speaker.B { color: var(--B); }
+  .bubble-speaker.Miki { color: var(--Miki); }
+  .bubble-speaker.Jin { color: var(--Jin); }
+
+  select.blank-sel { display: inline-block; width: auto; min-width: 78px; background: var(--surface2); border: 1.5px solid var(--accent); border-radius: 7px; color: var(--accent); font-family: 'Sora', sans-serif; font-size: 0.76rem; font-weight: 600; padding: 3px 22px 3px 8px; outline: none; cursor: pointer; -webkit-appearance: none; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23818cf8'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 6px center; margin: 0 2px; }
+  select.blank-sel.correct { border-color: var(--success); color: var(--success); background-color: rgba(76,175,125,0.1); background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%234CAF7D'/%3E%3C/svg%3E"); }
+  select.blank-sel.wrong { border-color: var(--error); color: var(--error); background-color: rgba(224,92,92,0.1); background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23E05C5C'/%3E%3C/svg%3E"); }
+  select.blank-sel option { background: #1e2348; color: var(--white); }
+
+  .btn { width: 100%; padding: 13px; border: none; border-radius: 12px; font-family: 'Sora', sans-serif; font-size: 0.86rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+  .btn-primary { background: var(--accent); color: #0d1128; }
+  .btn-primary:hover { opacity: 0.88; transform: translateY(-1px); }
+  .btn-primary:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
+  .btn-ghost { background: transparent; border: 1.5px solid var(--border); color: var(--muted); margin-top: 9px; }
+  .btn-ghost:hover { border-color: var(--muted); color: var(--white); }
+
+  .total-box { background: var(--surface2); border: 1.5px solid var(--accent); border-radius: 14px; padding: 16px; text-align: center; margin-bottom: 14px; }
+  .total-label { font-size: 0.62rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); margin-bottom: 6px; }
+  .total-num   { font-family: 'Lora', serif; font-size: 2.6rem; font-weight: 600; line-height: 1; }
+  .total-denom { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
+
+  .split-scores { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+  .split-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 12px 8px; text-align: center; }
+  .split-label { font-size: 0.54rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+  .split-num   { font-family: 'Lora', serif; font-size: 1.4rem; font-weight: 600; }
+  .split-denom { font-size: 0.6rem; color: var(--muted); }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px; margin-bottom: 12px; }
+  .review-row { display: flex; align-items: flex-start; gap: 9px; padding: 9px 0; border-bottom: 1px solid var(--border); }
+  .review-row:last-child { border-bottom: none; }
+  .review-num { min-width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.62rem; font-weight: 700; margin-top: 1px; flex-shrink: 0; }
+  .rn-ok  { background: rgba(76,175,125,0.18); color: var(--success); }
+  .rn-bad { background: rgba(224,92,92,0.18);  color: var(--error); }
+  .review-body { flex: 1; }
+  .review-label  { font-size: 0.66rem; color: var(--muted); margin-bottom: 2px; }
+  .review-answer { font-weight: 600; font-size: 0.82rem; }
+  .rev-ok  { color: var(--success); }
+  .rev-bad { color: var(--error); }
+  .review-correct { font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
+  .review-correct span { color: var(--success); font-weight: 600; }
+
+  #sheetStatus { text-align: center; font-size: 0.72rem; color: var(--muted); padding: 8px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-label">Grammar Speaking Activity</div>
+  <h1>First Day of University</h1>
+  <p class="sub">Past Simple — Open &amp; Closed Questions</p>
+</div>
+
+<div class="steps" id="stepBar">
+  <div class="step active" id="s1"><div class="step-dot">1</div><span>Setup</span></div>
+  <div class="step-line"></div>
+  <div class="step" id="s2"><div class="step-dot">2</div><span>Talk 1</span></div>
+  <div class="step-line"></div>
+  <div class="step" id="s3"><div class="step-dot">3</div><span>Talk 2</span></div>
+  <div class="step-line"></div>
+  <div class="step" id="s4"><div class="step-dot">4</div><span>Fix It</span></div>
+  <div class="step-line"></div>
+  <div class="step" id="s5"><div class="step-dot">5</div><span>Score</span></div>
+</div>
+
+<!-- ── Screen 1: Setup ── -->
+<div class="screen active" id="screen1">
+  <div class="sec-label">Your details</div>
+  <div class="field"><label>Student Number</label><input type="text" id="studentNumber" placeholder="e.g. 24B001"></div>
+  <div class="field"><label>Name (Romaji)</label><input type="text" id="studentName" placeholder="e.g. Tanaka Yuki"></div>
+  <div class="sec-label">Your partner role</div>
+  <div class="partner-grid">
+    <div class="partner-btn" id="btnA" onclick="selectPartner('A')">
+      <div class="partner-letter pa">A</div>
+      <div class="partner-desc">Play <strong>Rin</strong> in Talk 1.<br>Play <strong>Rin</strong> in Talk 2.</div>
+    </div>
+    <div class="partner-btn" id="btnB" onclick="selectPartner('B')">
+      <div class="partner-letter pb">B</div>
+      <div class="partner-desc">Play <strong>Mai</strong> in Talk 1.<br>Play <strong>Mai</strong> in Talk 2.</div>
+    </div>
+  </div>
+  <br>
+  <button class="btn btn-primary" id="btnNext1" onclick="goTo(2)" disabled>Start →</button>
+</div>
+
+<!-- ── Screen 2: Dialogue 1 ── -->
+<div class="screen" id="screen2">
+  <div class="instr" id="s2instr"></div>
+  <div id="chat1Container"></div>
+  <button class="btn btn-primary" onclick="finishChat(1)">Next: Talk 2 →</button>
+  <button class="btn btn-ghost" onclick="goTo(1)">← Back</button>
+</div>
+
+<!-- ── Screen 3: Dialogue 2 ── -->
+<div class="screen" id="screen3">
+  <div class="instr" id="s3instr"></div>
+  <div id="chat2Container"></div>
+  <button class="btn btn-primary" onclick="finishChat(2)">Next: Fix the Mistake →</button>
+  <button class="btn btn-ghost" onclick="goTo(2)">← Back</button>
+</div>
+
+<!-- ── Screen 4: Fix the Mistake (individual) ── -->
+<div class="screen" id="screen4">
+  <div class="instr">🔧 <strong>Fix the Mistake.</strong> Read Miki and Jin's conversation. Complete it on your own — choose the correct word for each blank.</div>
+  <div id="fixContainer"></div>
+  <button class="btn btn-primary" onclick="submitAll()">Submit & See Score →</button>
+  <button class="btn btn-ghost" onclick="goTo(3)">← Back</button>
+</div>
+
+<!-- ── Screen 5: Score ── -->
+<div class="screen" id="screen5">
+  <div class="total-box">
+    <div class="total-label">Total Score</div>
+    <div class="total-num" id="totalNum">—</div>
+    <div class="total-denom">out of 36</div>
+  </div>
+  <div class="split-scores">
+    <div class="split-card"><div class="split-label">Talk 1</div><div class="split-num" id="c1Num">—</div><div class="split-denom">/12</div></div>
+    <div class="split-card"><div class="split-label">Talk 2</div><div class="split-num" id="c2Num">—</div><div class="split-denom">/12</div></div>
+    <div class="split-card"><div class="split-label">Fix It</div><div class="split-num" id="fixNum">—</div><div class="split-denom">/12</div></div>
+  </div>
+  <div class="sec-label">Answer review</div>
+  <div class="card" id="reviewList"></div>
+  <div id="sheetStatus"></div>
+</div>
+
+<script>
+const SHEET_URL = "https://script.google.com/macros/s/AKfycbxyJAjtSA8sNg2TrnXapuRaawuujm3apZATB2Rq7bfsxXJd1QJiXJn24vFtNYHLvoTS/exec";
+
+// ── Dialogue 1: A=Rin asks, B=Mai answers ──────────────────────
+const chat1 = [
+  { speaker:'A', segs:["Hi Mai! ","","you nervous on your first day of university?"], blanks:[{correct:"Were",options:["Were","Was","Did"]}] },
+  { speaker:'B', segs:["Yes, I ","",". I ","","really nervous in the morning."], blanks:[{correct:"was",options:["was","were","did"]},{correct:"felt",options:["felt","feel","feeled"]}] },
+  { speaker:'A', segs:["What ","","you do first?"], blanks:[{correct:"did",options:["did","were","was"]}] },
+  { speaker:'B', segs:["I ","",", and I ","","my new classmates there."], blanks:[{correct:"went",options:["went","goed","go"]},{correct:"met",options:["met","meeted","meet"]}] },
+  { speaker:'A', segs:["","you find your classroom easily?"], blanks:[{correct:"Did",options:["Did","Were","Was"]}] },
+  { speaker:'B', segs:["No, I ","",". I ","","lost for ten minutes!"], blanks:[{correct:"didn't",options:["didn't","wasn't","don't"]},{correct:"got",options:["got","getted","get"]}] },
+  { speaker:'A', segs:["What ","","you eat for lunch?"], blanks:[{correct:"did",options:["did","were","was"]}] },
+  { speaker:'B', segs:["I ","", ", and I ","","it in the cafeteria."], blanks:[{correct:"ate",options:["ate","eated","eat"]},{correct:"had",options:["had","haved","have"]}] },
+];
+
+// ── Dialogue 2: B=Mai asks, A=Rin answers ──────────────────────
+const chat2 = [
+  { speaker:'B', segs:["Hi Rin! ","","you excited about university?"], blanks:[{correct:"Were",options:["Were","Was","Did"]}] },
+  { speaker:'A', segs:["Yes, I ","",". I ","","very happy on the first day."], blanks:[{correct:"was",options:["was","were","did"]},{correct:"felt",options:["felt","feel","feeled"]}] },
+  { speaker:'B', segs:["What ","","you wear?"], blanks:[{correct:"did",options:["did","were","was"]}] },
+  { speaker:'A', segs:["I ","",", and I ","","my hair before school."], blanks:[{correct:"wore",options:["wore","weared","wear"]},{correct:"brushed",options:["brushed","brush","brushes"]}] },
+  { speaker:'B', segs:["","you make any friends?"], blanks:[{correct:"Did",options:["Did","Were","Was"]}] },
+  { speaker:'A', segs:["Yes, I ","",". I ","","two people in my first class."], blanks:[{correct:"did",options:["did","was","were"]},{correct:"met",options:["met","meeted","meet"]}] },
+  { speaker:'B', segs:["What ","","you do after class?"], blanks:[{correct:"did",options:["did","were","was"]}] },
+  { speaker:'A', segs:["I ","",", and I ","","my family about my day."], blanks:[{correct:"went",options:["went","goed","go"]},{correct:"told",options:["told","telled","tell"]}] },
+];
+
+// ── Fix the Mistake: Miki & Jin conversation (individual) ──────
+const fixChat = [
+  { speaker:'Miki', segs:["Hi Jin! ","","you do anything interesting last weekend?"], blanks:[{correct:"Did",options:["Did","Were","Was"]}] },
+  { speaker:'Jin',  segs:["Yes, I ","","! I ","","to the beach with my friends."], blanks:[{correct:"did",options:["did","was","were"]},{correct:"went",options:["went","goed","go"]}] },
+  { speaker:'Miki', segs:["Nice! ","","the weather good?"], blanks:[{correct:"Was",options:["Was","Did","Were"]}] },
+  { speaker:'Jin',  segs:["Yes, it ","",". We ","","in the ocean for hours."], blanks:[{correct:"was",options:["was","were","did"]},{correct:"swam",options:["swam","swimmed","swim"]}] },
+  { speaker:'Miki', segs:["Sounds fun! What ","","you eat there?"], blanks:[{correct:"did",options:["did","were","was"]}] },
+  { speaker:'Jin',  segs:["We ","","some snacks, and we ","","ice cream too."], blanks:[{correct:"ate",options:["ate","eated","eat"]},{correct:"had",options:["had","haved","have"]}] },
+  { speaker:'Miki', segs:["","you take any photos?"], blanks:[{correct:"Did",options:["Did","Were","Was"]}] },
+  { speaker:'Jin',  segs:["Yes, I ","",". I ","","so many pictures of the sunset!"], blanks:[{correct:"did",options:["did","was","were"]},{correct:"took",options:["took","taked","take"]}] },
+];
+
+// ── State ─────────────────────────────────────────────────────
+let currentScreen = 1;
+let partner  = null;
+let chat1Sel = {};
+let chat2Sel = {};
+let fixSel   = {};
+let locked   = false;
+
+const LS_KEY = 'past_simple_state';
+
+function saveState() {
+  const state = { currentScreen, partner, chat1Sel, chat2Sel, fixSel, locked,
+    studentName:   document.getElementById('studentName').value,
+    studentNumber: document.getElementById('studentNumber').value };
+  try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch(e) {}
+}
+function loadState() {
+  try { const raw = localStorage.getItem(LS_KEY); return raw ? JSON.parse(raw) : null; } catch(e) { return null; }
+}
+function clearState() { try { localStorage.removeItem(LS_KEY); } catch(e) {} }
+
+function restoreState(state) {
+  partner  = state.partner;
+  chat1Sel = state.chat1Sel || {};
+  chat2Sel = state.chat2Sel || {};
+  fixSel   = state.fixSel   || {};
+  locked   = state.locked   || false;
+  if (state.studentName)   document.getElementById('studentName').value   = state.studentName;
+  if (state.studentNumber) document.getElementById('studentNumber').value = state.studentNumber;
+  if (partner) {
+    document.getElementById('btnA').className = 'partner-btn' + (partner==='A' ? ' sel-A' : '');
+    document.getElementById('btnB').className = 'partner-btn' + (partner==='B' ? ' sel-B' : '');
+  }
+  checkReady();
+  const n = state.currentScreen || 1;
+  goTo(n);
+  setTimeout(() => {
+    if (n===2) Object.entries(chat1Sel).forEach(([k,v]) => { const el=document.getElementById(`c1_${k}`); if(el) el.value=v; });
+    if (n===3) Object.entries(chat2Sel).forEach(([k,v]) => { const el=document.getElementById(`c2_${k}`); if(el) el.value=v; });
+    if (n===4) Object.entries(fixSel).forEach(([k,v]) => { const el=document.getElementById(`fix_${k}`); if(el) el.value=v; });
+  }, 120);
+}
+
+// ── Navigation ────────────────────────────────────────────────
+function updateSteps(n) {
+  [1,2,3,4,5].forEach(i => {
+    const el = document.getElementById('s'+i);
+    el.className = 'step' + (i < n ? ' done' : i === n ? ' active' : '');
+    el.querySelector('.step-dot').textContent = i < n ? '✓' : i;
+  });
+}
+function goTo(n) {
+  currentScreen = n;
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen'+n).classList.add('active');
+  updateSteps(n);
+  window.scrollTo(0,0);
+  if (n===2) buildChat(1);
+  if (n===3) buildChat(2);
+  if (n===4) buildFix();
+  saveState();
+}
+
+function selectPartner(p) {
+  partner = p;
+  document.getElementById('btnA').className = 'partner-btn' + (p==='A' ? ' sel-A' : '');
+  document.getElementById('btnB').className = 'partner-btn' + (p==='B' ? ' sel-B' : '');
+  checkReady();
+  saveState();
+}
+function checkReady() {
+  document.getElementById('btnNext1').disabled = !(
+    partner &&
+    document.getElementById('studentName').value.trim() &&
+    document.getElementById('studentNumber').value.trim()
+  );
+}
+document.getElementById('studentName').addEventListener('input', () => { checkReady(); saveState(); });
+document.getElementById('studentNumber').addEventListener('input', () => { checkReady(); saveState(); });
+
+function shuffle(arr) { return arr.slice().sort(() => Math.random() - 0.5); }
+
+// ── Build a chat line (shared by dialogues + fix) ──────────────
+function renderLine(line, lineIdx, prefix, isReaderFn) {
+  const isMine = isReaderFn(line.speaker);
+  let html = '';
+  let blankIdx = 0;
+  line.segs.forEach(seg => {
+    if (seg === '') {
+      const b = line.blanks[blankIdx];
+      if (isMine) {
+        html += ` ${b.correct} `;
+      } else {
+        const opts = shuffle(b.options);
+        const w = Math.max(72, Math.max(...opts.map(o=>o.length)) * 7.5) + 'px';
+        const key = `${lineIdx}_${blankIdx}`;
+        html += `<select class="blank-sel" id="${prefix}_${key}" style="width:${w}" onchange="onBlank('${prefix}',${lineIdx},${blankIdx},this.value)"><option value="">\u2014</option>${opts.map(o=>`<option value="${o}">${o}</option>`).join('')}</select>`;
+      }
+      blankIdx++;
+    } else {
+      html += seg;
+    }
+  });
+  return html;
+}
+
+// ── Build Dialogue screens ──────────────────────────────────────
+function buildChat(num) {
+  const data = num === 1 ? chat1 : chat2;
+  const containerId = num === 1 ? 'chat1Container' : 'chat2Container';
+  const instrId = num === 1 ? 's2instr' : 's3instr';
+  const prefix = num === 1 ? 'c1' : 'c2';
+  const asker = num === 1 ? 'A' : 'B';
+  const label = num === 1 ? "Talk 1 \u2014 Rin asks Mai" : "Talk 2 \u2014 Mai asks Rin";
+
+  document.getElementById(instrId).innerHTML = partner === asker
+    ? `\ud83d\udcac <strong>${label}.</strong> You are asking the questions. Read your lines aloud. Listen to your partner's answers and fill in their blanks.`
+    : `\ud83d\udcac <strong>${label}.</strong> You are answering the questions. Read your lines aloud. Listen to your partner's questions and fill in their blanks.`;
+
+  if (document.getElementById(containerId).innerHTML) return;
+
+  let html = `<div class="chat-label">${label}</div>`;
+  data.forEach((line, i) => {
+    const content = renderLine(line, i, prefix, (spk) => spk === partner);
+    html += `
+      <div class="bubble-row ${line.speaker}">
+        <div class="bubble ${line.speaker}">
+          <div class="bubble-speaker ${line.speaker}">${line.speaker === 'A' ? 'Rin' : 'Mai'}</div>
+          ${content}
+        </div>
+      </div>`;
+  });
+  document.getElementById(containerId).innerHTML = html;
+}
+function onBlank(prefix, lineIdx, blankIdx, val) {
+  const key = `${lineIdx}_${blankIdx}`;
+  if (prefix === 'c1') chat1Sel[key] = val;
+  else if (prefix === 'c2') chat2Sel[key] = val;
+  else if (prefix === 'fix') fixSel[key] = val;
+  saveState();
+}
+function finishChat(num) {
+  const data = num === 1 ? chat1 : chat2;
+  const sel = num === 1 ? chat1Sel : chat2Sel;
+  let missing = false;
+  data.forEach((line, i) => {
+    if (line.speaker === partner) return;
+    line.blanks.forEach((_, bi) => {
+      if (!sel[`${i}_${bi}`]) missing = true;
+    });
+  });
+  if (missing) { alert('Please fill in all the blanks you can hear.'); return; }
+  goTo(num === 1 ? 3 : 4);
+}
+
+// ── Build Fix the Mistake (individual) ─────────────────────────
+function buildFix() {
+  if (document.getElementById('fixContainer').innerHTML) return;
+  let html = `<div class="chat-label">Miki &amp; Jin \u2014 Last Weekend</div>`;
+  fixChat.forEach((line, i) => {
+    const content = renderLine(line, i, 'fix', () => false); // everyone fills every blank
+    html += `
+      <div class="bubble-row ${line.speaker}">
+        <div class="bubble ${line.speaker}">
+          <div class="bubble-speaker ${line.speaker}">${line.speaker}</div>
+          ${content}
+        </div>
+      </div>`;
+  });
+  document.getElementById('fixContainer').innerHTML = html;
+}
+
+// ── Submit & score ────────────────────────────────────────────
+function submitAll() {
+  let missing = false;
+  fixChat.forEach((line,i) => {
+    line.blanks.forEach((_,bi) => { if (!fixSel[`${i}_${bi}`]) missing = true; });
+  });
+  if (missing) { alert('Please fill in every blank in the Miki & Jin conversation.'); return; }
+  locked = true;
+
+  const review = [];
+
+  function scoreChat(data, sel, prefix, label) {
+    let score = 0;
+    data.forEach((line,i) => {
+      if (line.speaker === partner) return;
+      line.blanks.forEach((b, bi) => {
+        const key = `${i}_${bi}`;
+        const chosen = sel[key];
+        const ok = chosen === b.correct;
+        if (ok) score++;
+        const el = document.getElementById(`${prefix}_${key}`);
+        if (el) el.className = 'blank-sel ' + (ok ? 'correct' : 'wrong');
+        review.push({ label: `${label} \u2014 ${line.speaker}'s line ${i+1}`, chosen, ok, correct: b.correct });
+      });
+    });
+    return score;
+  }
+
+  const c1Score = scoreChat(chat1, chat1Sel, 'c1', 'Talk 1');
+  const c2Score = scoreChat(chat2, chat2Sel, 'c2', 'Talk 2');
+
+  // Fix the Mistake (everyone scores all blanks)
+  let fixScore = 0;
+  fixChat.forEach((line,i) => {
+    line.blanks.forEach((b, bi) => {
+      const key = `${i}_${bi}`;
+      const chosen = fixSel[key];
+      const ok = chosen === b.correct;
+      if (ok) fixScore++;
+      const el = document.getElementById(`fix_${key}`);
+      if (el) el.className = 'blank-sel ' + (ok ? 'correct' : 'wrong');
+      review.push({ label: `Fix It \u2014 ${line.speaker}'s line ${i+1}`, chosen, ok, correct: b.correct });
+    });
+  });
+
+  const total = c1Score + c2Score + fixScore;
+  const pct = Math.round(total/36*100);
+
+  document.getElementById('totalNum').textContent = total + '/36';
+  document.getElementById('c1Num').textContent = c1Score;
+  document.getElementById('c2Num').textContent = c2Score;
+  document.getElementById('fixNum').textContent = fixScore;
+
+  document.getElementById('reviewList').innerHTML = review.map(r => `
+    <div class="review-row">
+      <div class="review-num ${r.ok?'rn-ok':'rn-bad'}">${r.ok?'\u2713':'\u2717'}</div>
+      <div class="review-body">
+        <div class="review-label">${r.label}</div>
+        <div class="review-answer ${r.ok?'rev-ok':'rev-bad'}">Your answer: ${r.chosen || '\u2014'}</div>
+        ${!r.ok?`<div class="review-correct">Correct: <span>${r.correct}</span></div>`:''}
+      </div>
+    </div>`).join('');
+
+  goTo(5);
+  clearState();
+  logToSheets(c1Score, c2Score, fixScore, total, pct, review);
+}
+
+// ── Google Sheets ─────────────────────────────────────────────
+function logToSheets(c1Score, c2Score, fixScore, total, pct, review) {
+  if (!SHEET_URL || SHEET_URL === 'PASTE_URL_HERE') {
+    document.getElementById('sheetStatus').textContent = '\u26a0\ufe0f No gradebook URL set.';
+    return;
+  }
+  document.getElementById('sheetStatus').textContent = '\u23f3 Saving to gradebook\u2026';
+  const name = document.getElementById('studentName').value.trim();
+  const num  = document.getElementById('studentNumber').value.trim();
+  const detail = review.map(r => `${r.label}:${r.chosen||'\u2014'}(${r.ok?'\u2713':'\u2717'})`).join(' | ');
+
+  const payload = JSON.stringify({
+    studentNumber: num, studentName: name, partner,
+    score: total + '/36', percent: pct,
+    story1Score: c1Score + '/12', story2Score: c2Score + '/12', fixScore: fixScore + '/12',
+    response: detail
+  });
+
+  const form = document.createElement('form');
+  form.method = 'POST'; form.action = SHEET_URL; form.target = 'hidden_iframe'; form.style.display = 'none';
+  const input = document.createElement('input');
+  input.type = 'hidden'; input.name = 'data'; input.value = payload;
+  form.appendChild(input);
+  const iframe = document.createElement('iframe');
+  iframe.name = 'hidden_iframe'; iframe.style.display = 'none';
+  iframe.onload = () => { document.getElementById('sheetStatus').textContent = '\u2705 Saved to gradebook.'; };
+  document.body.appendChild(iframe);
+  document.body.appendChild(form);
+  form.submit();
+  setTimeout(() => {
+    const st = document.getElementById('sheetStatus');
+    if (st.textContent.includes('\u23f3')) st.textContent = '\u2705 Saved to gradebook.';
+  }, 3000);
+}
+
+// ── On load ───────────────────────────────────────────────────
+window.addEventListener('load', () => {
+  const state = loadState();
+  if (state && state.currentScreen > 1) restoreState(state);
+});
+</script>
+</body>
+</html>
