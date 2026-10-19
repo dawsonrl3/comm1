@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>How often do you...?</title>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@600;700;800;900&display=swap');
+
+:root {
+  --bg:      #f3e3b8;
+  --paper:   #fff8e4;
+  --paper2:  #f8ecc6;
+  --ink:     #2b1b08;
+  --ink2:    #6a4a1c;
+  --brown:   #5a3a12;
+  --line:    #c9a55c;
+  --gold:    #f2b705;
+  --green:   #1f8a4c;
+  --green-d: #146236;
+  --red:     #c2381e;
+  --blue:    #1f5fa8;
+  --shadow:  rgba(43,27,8,.25);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+html, body { width: 100%; max-width: 100%; overflow-x: hidden; }
+
+body {
+  font-family: 'Nunito', -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-size: 17px;
+  color: var(--ink);
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(circle at 20% 10%, rgba(255,255,255,.45), transparent 45%),
+    radial-gradient(circle at 80% 90%, rgba(168,120,40,.22), transparent 50%);
+  min-height: 100vh;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* ---------- HEADER ---------- */
+.header {
+  background: var(--brown);
+  color: #fff;
+  padding: 12px 14px;
+  display: flex; align-items: center; gap: 10px;
+  position: sticky; top: 0; z-index: 100;
+  border-bottom: 4px solid var(--gold);
+}
+.header h1 { font-size: 20px; font-weight: 900; flex: 1; line-height: 1.15; }
+.room-badge {
+  display: none;
+  background: var(--gold); color: var(--ink);
+  border-radius: 999px; padding: 5px 12px;
+  font-size: 15px; font-weight: 900; letter-spacing: 3px;
+}
+
+/* ---------- SCREENS ---------- */
+.screen { display: none; padding: 12px; max-width: 520px; margin: 0 auto; }
+.screen.active { display: block; }
+
+.card {
+  background: var(--paper);
+  border: 3px solid var(--line);
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 14px;
+  box-shadow: 0 4px 0 var(--line), 0 8px 16px var(--shadow);
+}
+.card-title {
+  font-size: 15px; font-weight: 900; color: var(--brown);
+  text-transform: uppercase; letter-spacing: 1px;
+  margin-bottom: 10px;
+}
+
+input[type=text] {
+  width: 100%; padding: 14px; font-size: 18px; font-weight: 700;
+  font-family: inherit;
+  border: 3px solid var(--line); border-radius: 12px;
+  background: #fff; color: var(--ink); margin-bottom: 16px; outline: none;
+}
+input[type=text]:focus { border-color: var(--brown); }
+
+.btn {
+  display: block; width: 100%;
+  padding: 16px; font-family: inherit; font-size: 19px; font-weight: 900;
+  border: none; border-radius: 14px; cursor: pointer; margin-bottom: 10px;
+  color: #fff;
+}
+.btn:active { transform: translateY(3px); box-shadow: none !important; }
+.btn-primary { background: var(--brown); box-shadow: 0 5px 0 #2b1b08; }
+.btn-green   { background: var(--green); box-shadow: 0 5px 0 var(--green-d); }
+.btn-secondary { background: var(--paper2); color: var(--ink); border: 3px solid var(--line); box-shadow: 0 4px 0 var(--line); }
+.btn-sm { width: auto; display: inline-block; padding: 10px 20px; font-size: 16px; }
+.btn:disabled { opacity: .4; pointer-events: none; }
+
+/* ---------- AVATARS ---------- */
+.avatar-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 16px; }
+.avatar-option {
+  aspect-ratio: 1; font-size: 34px;
+  display: flex; align-items: center; justify-content: center;
+  background: #fff; border: 3px solid var(--line); border-radius: 14px; cursor: pointer;
+}
+.avatar-option.selected { border-color: var(--green); background: #e3f6ea; box-shadow: 0 0 0 3px var(--green); }
+
+.room-code-display {
+  font-size: 44px; font-weight: 900; letter-spacing: 8px; text-align: center;
+  background: #fff; border: 3px dashed var(--line); border-radius: 12px;
+  padding: 12px 4px; margin-bottom: 14px;
+}
+
+.player-item { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 2px dashed var(--line); font-size: 19px; font-weight: 800; }
+.player-item:last-child { border-bottom: none; }
+.player-avatar { font-size: 34px; width: 44px; text-align: center; }
+.you-badge { margin-left: auto; background: var(--gold); border-radius: 999px; padding: 3px 12px; font-size: 14px; font-weight: 900; }
+
+.hint { font-size: 16px; color: var(--ink2); text-align: center; margin: 8px 0 14px; line-height: 1.5; font-weight: 600; }
+.error-msg { color: var(--red); font-size: 16px; font-weight: 800; text-align: center; min-height: 22px; margin-bottom: 6px; }
+
+/* ---------- GAME ---------- */
+.turn-bar {
+  border-radius: 14px; padding: 14px; margin-bottom: 12px;
+  font-size: 20px; font-weight: 900; text-align: center; border: 3px solid;
+}
+.turn-bar.mine  { background: #d7f3e1; color: var(--green-d); border-color: var(--green); }
+.turn-bar.other { background: var(--paper2); color: var(--ink2); border-color: var(--line); }
+
+/* Sentence stems: two rows */
+.stems {
+  background: var(--brown); color: #fff;
+  border-radius: 14px; padding: 12px 14px; margin-bottom: 12px;
+  border: 3px solid var(--gold);
+}
+.stem-row { display: flex; gap: 10px; align-items: baseline; font-size: 17px; line-height: 1.4; font-weight: 700; }
+.stem-row + .stem-row { margin-top: 8px; padding-top: 8px; border-top: 2px dashed rgba(255,255,255,.3); }
+.stem-label {
+  flex: 0 0 auto; background: var(--gold); color: var(--ink);
+  font-weight: 900; border-radius: 8px; padding: 0 9px; font-size: 17px;
+}
+.stem-text { flex: 1; min-width: 0; }
+.stem-text b { color: var(--gold); font-weight: 900; }
+.stem-or { color: rgba(255,255,255,.65); font-weight: 700; }
+
+.question-card {
+  background: #fff; border: 4px solid var(--gold); border-radius: 16px;
+  padding: 16px; margin-bottom: 12px; text-align: center;
+  box-shadow: 0 5px 0 #c99700;
+}
+.q-label { font-size: 16px; font-weight: 800; color: var(--ink2); margin-bottom: 6px; }
+.q-text { font-size: 26px; font-weight: 900; line-height: 1.25; color: var(--ink); }
+
+.log-bar {
+  background: var(--paper2); border: 2px dashed var(--line); border-radius: 12px;
+  padding: 10px 12px; margin-bottom: 12px; text-align: center;
+  font-size: 16px; font-weight: 700; color: var(--ink2); min-height: 44px;
+}
+
+/* Die */
+.die-section { display: flex; flex-direction: column; align-items: center; margin-bottom: 14px; }
+.die {
+  width: 104px; height: 104px; background: #fff; border: 4px solid var(--brown);
+  border-radius: 22px; box-shadow: 0 6px 0 var(--brown), 0 10px 18px var(--shadow);
+  display: grid; grid-template: repeat(3, 1fr) / repeat(3, 1fr);
+  padding: 14px; gap: 4px; cursor: pointer; user-select: none; margin-bottom: 14px;
+}
+.pip { border-radius: 50%; background: transparent; }
+.pip.on { background: var(--ink); }
+.die-rolling { animation: dieRoll .5s ease-out; }
+@keyframes dieRoll {
+  0% { transform: rotate(0) scale(1); } 25% { transform: rotate(-20deg) scale(1.15); }
+  60% { transform: rotate(18deg) scale(1.2); } 100% { transform: rotate(0) scale(1); }
+}
+.die-result { font-size: 18px; font-weight: 800; color: var(--ink2); min-height: 26px; margin-bottom: 8px; }
+.die-section .btn { max-width: 360px; }
+
+/* Players */
+.gp-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 2px dashed var(--line); font-size: 18px; font-weight: 800; }
+.gp-row:last-child { border-bottom: none; }
+.gp-avatar { font-size: 32px; width: 42px; text-align: center; }
+.gp-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gp-pos { font-size: 16px; color: var(--ink2); font-weight: 800; }
+.progress-wrap { width: 70px; height: 10px; background: #fff; border-radius: 6px; border: 2px solid var(--line); overflow: hidden; }
+.progress-fill { height: 100%; }
+
+.section-label { font-size: 15px; font-weight: 900; color: var(--brown); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+
+/* ---------- ADVENTURE MAP (scrolls vertically only) ---------- */
+.trail-scroll {
+  max-height: 72vh; overflow-y: auto; overflow-x: hidden;
+  -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
+  border: 3px solid var(--brown); border-radius: 14px;
+  background: #e9dca8;
+}
+.map { position: relative; width: 100%; overflow: hidden; }
+.map svg { position: absolute; left: 0; top: 0; }
+.scenery { position: absolute; line-height: 1; transform: translate(-50%, -50%); pointer-events: none;
+  filter: drop-shadow(0 3px 2px rgba(43,27,8,.3)); }
+.node {
+  position: absolute; width: 64px; height: 64px; margin: -32px 0 0 -32px;
+  border-radius: 50%; background: #fff8e4; border: 5px solid var(--brown);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 26px; font-weight: 900; color: var(--brown);
+  box-shadow: 0 4px 0 rgba(43,27,8,.35);
+}
+.node.start  { background: #d7f3e1; border-color: var(--green-d); font-size: 32px; }
+.node.finish { background: var(--gold); border-color: #b88700; font-size: 40px; width: 76px; height: 76px; margin: -38px 0 0 -38px; }
+.node.mine   { border-color: var(--green); box-shadow: 0 0 0 5px rgba(31,138,76,.4), 0 4px 0 rgba(43,27,8,.35); }
+.node.landed { animation: landPulse 1.2s ease-out; }
+@keyframes landPulse { 0% { transform: scale(1.35); } 100% { transform: scale(1); } }
+.nlabel {
+  position: absolute; transform: translateY(-50%);
+  background: #fffdf2; border: 3px solid var(--brown); border-radius: 12px;
+  padding: 8px 12px; font-size: 19px; font-weight: 800; line-height: 1.2; color: var(--ink);
+  box-shadow: 0 3px 0 rgba(43,27,8,.3); overflow-wrap: anywhere;
+}
+.nlabel.finish { background: #fff3bf; border-color: #b88700; }
+.nlabel.start { background: #e9f9ef; border-color: var(--green-d); }
+.ntokens { position: absolute; display: flex; flex-wrap: wrap; justify-content: center; z-index: 5; transform: translate(-50%, -100%); margin-top: -26px; }
+.token { font-size: 36px; line-height: 1; filter: drop-shadow(0 2px 2px rgba(0,0,0,.45)); }
+
+/* ---------- WINNER ---------- */
+.winner-inner { text-align: center; padding: 28px 8px 12px; }
+.trophy { font-size: 84px; animation: pop .6s ease-out; }
+@keyframes pop { 0% { transform: scale(0); } 70% { transform: scale(1.2); } 100% { transform: scale(1); } }
+.winner-name { font-size: 32px; font-weight: 900; margin: 6px 0 4px; }
+.winner-sub { font-size: 19px; color: var(--ink2); font-weight: 700; margin-bottom: 22px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🗺️ How often do you...?</h1>
+  <div class="room-badge" id="header-room-badge"></div>
+</div>
+
+<!-- LOBBY -->
+<div id="lobby" class="screen active">
+  <div class="card">
+    <div class="card-title">Your name</div>
+    <input type="text" id="player-name" placeholder="e.g. Yuki" maxlength="18" autocomplete="off">
+
+    <div class="card-title">Pick your character</div>
+    <div class="avatar-grid" id="avatar-grid"></div>
+
+    <div class="card-title">Room code</div>
+    <input type="text" id="room-input" placeholder="Leave empty to start a new game" maxlength="6" autocomplete="off" style="text-transform:uppercase;letter-spacing:4px">
+
+    <div class="error-msg" id="lobby-error"></div>
+    <button class="btn btn-primary" onclick="joinOrCreate()">Play →</button>
+  </div>
+  <p class="hint">One student in each group starts a new game.<br>Everyone else types the room code.</p>
+</div>
+
+<!-- WAITING -->
+<div id="waiting" class="screen">
+  <div class="card">
+    <div class="card-title">Room code — tell your group</div>
+    <div class="room-code-display" id="display-code">------</div>
+    <div class="card-title">Players</div>
+    <div id="player-list-el"></div>
+    <div class="error-msg" id="wait-error"></div>
+    <div id="start-area" style="margin-top:10px"></div>
+    <button class="btn btn-secondary btn-sm" onclick="leaveGame()">Leave</button>
+  </div>
+  <p class="hint" id="wait-hint">Waiting for players...</p>
+</div>
+
+<!-- GAME -->
+<div id="game" class="screen">
+  <div class="turn-bar" id="turn-bar">Loading...</div>
+
+  <div class="stems">
+    <div class="stem-row">
+      <span class="stem-label">A</span>
+      <span class="stem-text">How often do you <b>eat breakfast</b>?</span>
+    </div>
+    <div class="stem-row">
+      <span class="stem-label">B</span>
+      <span class="stem-text">I <b>always</b> eat breakfast. <span class="stem-or">or</span> I eat breakfast <b>every day</b>.</span>
+    </div>
+  </div>
+
+  <div id="question-area"></div>
+  <div class="log-bar" id="log-bar">Let's go!</div>
+
+  <div class="die-section">
+    <div class="die" id="die" onclick="rollDie()"></div>
+    <div class="die-result" id="die-result"></div>
+    <button class="btn btn-primary" id="roll-btn" onclick="rollDie()">Roll the dice</button>
+  </div>
+
+  <div class="card">
+    <div class="section-label">Players</div>
+    <div id="game-players"></div>
+  </div>
+
+  <div class="card">
+    <div class="section-label">The adventure map (scroll ↕)</div>
+    <div class="trail-scroll" id="trail-scroll"><div class="map" id="trail-wrap"></div></div>
+  </div>
+
+  <button class="btn btn-secondary btn-sm" onclick="leaveGame()">Leave game</button>
+</div>
+
+<!-- WINNER -->
+<div id="winner-screen" class="screen">
+  <div class="card">
+    <div class="winner-inner">
+      <div class="trophy">🏆</div>
+      <div id="winner-avatar" style="font-size:64px"></div>
+      <div class="winner-name" id="winner-name"></div>
+      <div class="winner-sub">reached the finish!</div>
+      <button class="btn btn-primary" onclick="leaveGame()">Play again</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===================== FIREBASE CONFIG =====================
+const firebaseConfig = {
+  apiKey: "AIzaSyBrsLESE52ZBtE6iXPyO-DU3UstKfcxX48",
+  authDomain: "frequency-adverbs.firebaseapp.com",
+  databaseURL: "https://frequency-adverbs-default-rtdb.firebaseio.com",
+  projectId: "frequency-adverbs",
+  storageBucket: "frequency-adverbs.firebasestorage.app",
+  messagingSenderId: "8272563124",
+  appId: "1:8272563124:web:537beb3582b7a36ef4c0e1",
+  measurementId: "G-D7W5WDM9R6"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// ===================== BOARD DATA =====================
+const QUESTIONS = [
+  "read a newspaper","play sport","eat fast food","listen to music","travel by airplane",
+  "buy clothes","chat online","get up early","exercise","go out with friends",
+  "listen to the radio","speak English","eat fruit","go on holiday","play computer games",
+  "do housework","watch films","check your email","go to bed late","brush your teeth",
+  "go cycling","go to the dentist","go shopping","study English","use the Internet"
+];
+const BOARD = [
+  {t:"Start", type:"start"},
+  ...QUESTIONS.map(q => ({t:q, type:"q"})),
+  {t:"Finish! 🏁", type:"finish"}
+];
+const TOTAL = BOARD.length;
+
+const AVATARS = ["🧙","🧝","🏴‍☠️","🧟","🧚","🤴","👸","🦸","🧜","🧛"];
+// pip layouts on a 3x3 grid (positions 0-8)
+const PIPS = {1:[4], 2:[0,8], 3:[0,4,8], 4:[0,2,6,8], 5:[0,2,4,6,8], 6:[0,2,3,5,6,8]};
+
+// ===================== STATE =====================
+let myId=null, myName="", myAvatar="🧙", roomCode="";
+let roomRef=null, stateListener=null, localState=null, hasRolled=false;
+let selectedAvatar = AVATARS[0];
+
+// ===================== AVATAR PICKER =====================
+function buildAvatarPicker() {
+  document.getElementById('avatar-grid').innerHTML = AVATARS.map((a,i) =>
+    `<div class="avatar-option${i===0?' selected':''}" onclick="selectAvatar('${a}',this)">${a}</div>`
+  ).join('');
+}
+function selectAvatar(a, el) {
+  selectedAvatar = a;
+  document.querySelectorAll('.avatar-option').forEach(e => e.classList.remove('selected'));
+  el.classList.add('selected');
+}
+buildAvatarPicker();
+
+// ===================== DIE =====================
+function drawDie(n) {
+  const on = PIPS[n] || [];
+  let h = '';
+  for (let i = 0; i < 9; i++) h += `<div class="pip${on.includes(i) ? ' on' : ''}"></div>`;
+  document.getElementById('die').innerHTML = h;
+}
+drawDie(5);
+
+// ===================== UTILS =====================
+function genId(){ return Math.random().toString(36).slice(2,10); }
+function genRoom(){ return Math.random().toString(36).slice(2,8).toUpperCase(); }
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function show(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); document.getElementById(id).classList.add('active'); window.scrollTo(0,0); }
+
+// ===================== SESSION PERSISTENCE =====================
+function saveSession() { try { localStorage.setItem('hodo_session', JSON.stringify({myId, myName, myAvatar, roomCode})); } catch(e) {} }
+function clearSession() { try { localStorage.removeItem('hodo_session'); } catch(e) {} }
+function restoreSession() {
+  try {
+    const raw = localStorage.getItem('hodo_session');
+    if (!raw) return;
+    const s = JSON.parse(raw);
+    if (!s.myId || !s.roomCode) return;
+    myId = s.myId; myName = s.myName; myAvatar = s.myAvatar; roomCode = s.roomCode;
+    roomRef = db.ref('rooms/' + roomCode);
+    roomRef.once('value').then(snap => {
+      const state = snap.val();
+      if (!state || state.phase === 'won') { clearSession(); return; }
+      if (!state.players || !state.players.find(p => p.id === myId)) { clearSession(); return; }
+      document.getElementById('header-room-badge').textContent = roomCode;
+      document.getElementById('header-room-badge').style.display = 'block';
+      listenToRoom();
+    }).catch(() => { clearSession(); });
+  } catch(e) { clearSession(); }
+}
+
+// ===================== LOBBY =====================
+function joinOrCreate() {
+  const name = document.getElementById('player-name').value.trim();
+  const code = document.getElementById('room-input').value.trim().toUpperCase();
+  if (!name) { document.getElementById('lobby-error').textContent = 'Please type your name.'; return; }
+  document.getElementById('lobby-error').textContent = '';
+  myId = genId(); myName = name; myAvatar = selectedAvatar;
+  roomCode = code || genRoom();
+  if (!code) createRoom(); else joinRoom();
+}
+
+function createRoom() {
+  const me = {id:myId, name:myName, avatar:myAvatar, pos:0};
+  const state = {players:[me], phase:'lobby', turn:0, host:myId, log:'', lastLand:-1, lastLander:''};
+  roomRef = db.ref('rooms/'+roomCode);
+  roomRef.set(state).then(() => { saveSession(); showRoom(); listenToRoom(); })
+    .catch(() => { document.getElementById('lobby-error').textContent = 'Connection error. Try again.'; });
+}
+
+function joinRoom() {
+  roomRef = db.ref('rooms/'+roomCode);
+  roomRef.once('value').then(snap => {
+    const state = snap.val();
+    if (!state) { document.getElementById('lobby-error').textContent = 'Room not found. Check the code.'; return; }
+    if (state.phase !== 'lobby') { document.getElementById('lobby-error').textContent = 'That game already started.'; return; }
+    state.players.push({id:myId, name:myName, avatar:myAvatar, pos:0});
+    roomRef.set(state).then(() => { saveSession(); showRoom(); listenToRoom(); });
+  }).catch(() => { document.getElementById('lobby-error').textContent = 'Connection error.'; });
+}
+
+function showRoom() {
+  document.getElementById('display-code').textContent = roomCode;
+  document.getElementById('header-room-badge').textContent = roomCode;
+  document.getElementById('header-room-badge').style.display = 'block';
+  show('waiting');
+}
+
+function listenToRoom() {
+  if (stateListener) roomRef.off('value', stateListener);
+  stateListener = roomRef.on('value', snap => {
+    const state = snap.val();
+    if (!state) return;
+    localState = state;
+    if (state.phase === 'lobby') { if (!document.getElementById('waiting').classList.contains('active')) show('waiting'); document.getElementById('display-code').textContent = roomCode; renderWaiting(state); }
+    else if (state.phase === 'playing') { if (!document.getElementById('game').classList.contains('active')) show('game'); renderGame(state); }
+    else if (state.phase === 'won') renderWinner(state);
+  });
+}
+
+// ===================== WAITING =====================
+function renderWaiting(state) {
+  document.getElementById('player-list-el').innerHTML = state.players.map(p =>
+    `<div class="player-item">
+      <span class="player-avatar">${p.avatar}</span>
+      <span>${esc(p.name)}${p.id===state.host?' 👑':''}</span>
+      ${p.id===myId?'<span class="you-badge">you</span>':''}
+    </div>`).join('');
+  const isHost = state.host === myId;
+  const sa = document.getElementById('start-area');
+  if (isHost && state.players.length >= 2) {
+    sa.innerHTML = `<button class="btn btn-green" onclick="startGame()">Start game (${state.players.length} players) →</button>`;
+    document.getElementById('wait-hint').textContent = 'Everyone here? Tap Start!';
+  } else if (isHost) {
+    sa.innerHTML = '';
+    document.getElementById('wait-hint').textContent = 'Waiting for at least one more player...';
+  } else {
+    sa.innerHTML = '';
+    document.getElementById('wait-hint').textContent = 'Waiting for the host to start...';
+  }
+}
+
+function startGame() {
+  if (!localState || localState.host !== myId) return;
+  roomRef.set({...localState, phase:'playing', turn:0,
+    log: localState.players[0].avatar+' '+localState.players[0].name+' goes first!',
+    lastLand:-1, lastLander:''});
+}
+
+// ===================== GAME =====================
+function myPlayer(s){ return s.players.find(p=>p.id===myId); }
+function currentPlayer(s){ return s.players[s.turn % s.players.length]; }
+function isMyTurn(s){ return currentPlayer(s)?.id === myId; }
+
+function renderGame(state) {
+  const cp = currentPlayer(state), mine = isMyTurn(state);
+  const tb = document.getElementById('turn-bar');
+  tb.className = 'turn-bar ' + (mine ? 'mine' : 'other');
+  tb.textContent = mine ? '⭐ Your turn! Roll the dice.' : cp.avatar + ' ' + cp.name + "'s turn";
+  document.getElementById('log-bar').textContent = state.log || '';
+  renderQuestion(state);
+  renderTrail(state);
+  renderDie(mine);
+  renderGamePlayers(state);
+}
+
+function renderQuestion(state) {
+  const qa = document.getElementById('question-area');
+  if (state.lastLand >= 0 && state.lastLander) {
+    const cell = BOARD[state.lastLand];
+    const lander = state.players.find(p => p.id === state.lastLander);
+    if (cell && cell.type === 'q' && lander) {
+      qa.innerHTML = `<div class="question-card">
+        <div class="q-label">${lander.avatar} ${esc(lander.name)} landed here. Ask:</div>
+        <div class="q-text">How often do you ${esc(cell.t)}?</div>
+      </div>`;
+      return;
+    }
+  }
+  qa.innerHTML = '';
+}
+
+// ---------- seeded random so every phone draws the identical map ----------
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+const f1 = n => n.toFixed(1);
+function smoothOpen(pts){
+  let d = `M ${f1(pts[0].x)} ${f1(pts[0].y)}`;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = pts[i-1] || pts[i], p1 = pts[i], p2 = pts[i+1], p3 = pts[i+2] || p2;
+    d += ` C ${f1(p1.x+(p2.x-p0.x)/6)} ${f1(p1.y+(p2.y-p0.y)/6)}, ${f1(p2.x-(p3.x-p1.x)/6)} ${f1(p2.y-(p3.y-p1.y)/6)}, ${f1(p2.x)} ${f1(p2.y)}`;
+  }
+  return d;
+}
+function blob(cx, cy, rx, ry, rng, k=9){
+  const pts = [];
+  for (let i = 0; i < k; i++) { const a = i/k*Math.PI*2, j = 0.7 + rng()*0.55; pts.push({x: cx+Math.cos(a)*rx*j, y: cy+Math.sin(a)*ry*j}); }
+  const n = pts.length; let d = `M ${f1(pts[0].x)} ${f1(pts[0].y)}`;
+  for (let i = 0; i < n; i++) {
+    const p0 = pts[(i-1+n)%n], p1 = pts[i], p2 = pts[(i+1)%n], p3 = pts[(i+2)%n];
+    d += ` C ${f1(p1.x+(p2.x-p0.x)/6)} ${f1(p1.y+(p2.y-p0.y)/6)}, ${f1(p2.x-(p3.x-p1.x)/6)} ${f1(p2.y-(p3.y-p1.y)/6)}, ${f1(p2.x)} ${f1(p2.y)}`;
+  }
+  return d + ' Z';
+}
+function measurePath(d, step){
+  const ns = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(ns, 'svg'); svg.setAttribute('width','0'); svg.setAttribute('height','0');
+  svg.style.cssText = 'position:absolute;visibility:hidden';
+  const p = document.createElementNS(ns, 'path'); p.setAttribute('d', d); svg.appendChild(p); document.body.appendChild(svg);
+  const L = p.getTotalLength(), out = [];
+  for (let l = 0; l <= L; l += step) { const q = p.getPointAtLength(l); out.push({x:q.x, y:q.y}); }
+  document.body.removeChild(svg);
+  return out;
+}
+
+// ---------- terrain zones and what lives in them: [emoji, min size, max size] ----------
+const ZONES = [
+  {name:'meadow',   from:0,  to:5,  bg:'#d3e5a2'},
+  {name:'forest',   from:6,  to:10, bg:'#a3c47e'},
+  {name:'desert',   from:11, to:15, bg:'#efdca4'},
+  {name:'mountain', from:16, to:20, bg:'#dadad2'},
+  {name:'swamp',    from:21, to:24, bg:'#b4c28a'},
+  {name:'castle',   from:25, to:99, bg:'#cfe4a0'}
+];
+const POOL = {
+  meadow:   [['🌳',46,66],['🌳',40,58],['🌷',20,28],['🌼',18,26],['🐑',30,40],['🏡',52,68],['🍄',20,28],['🦋',18,24],['🌳',50,70]],
+  forest:   [['🌲',50,76],['🌲',40,62],['🌲',54,80],['🌳',46,64],['🍄',20,28],['🐺',36,48],['🦌',38,50],['🦉',26,34],['🏕️',52,66],['🌲',34,46]],
+  desert:   [['🌵',36,60],['🌵',28,46],['🐪',40,56],['🦂',26,36],['🏺',22,30],['🪨',24,38],['🐍',24,32],['🏛️',62,82]],
+  mountain: [['⛰️',92,124],['🏔️',96,130],['🗻',84,112],['🌋',84,108],['🐉',60,82],['🪨',22,34],['❄️',22,30],['🌲',32,46],['🐻‍❄️',36,48]],
+  swamp:    [['🐸',22,30],['🐊',38,52],['🌿',22,32],['🪵',26,38],['🌳',40,56],['🧟',40,54],['🐍',24,32],['🦇',24,32],['🕸️',22,30],['🌿',26,36]],
+  castle:   [['🌳',46,62],['🌷',20,28],['🌼',18,26],['🏡',50,64],['🦄',40,52],['🌳',40,56]]
+};
+const MONSTERS = ['👹','🧌','🐲','👻','🦖','🕷️','🧛','🐙'];
+const zoneOfNode = i => ZONES.find(z => i >= z.from && i <= z.to);
+
+let mapCache = null;
+
+function buildMap(W) {
+  const rng = mulberry32(20241);
+  const TOP = 70;
+
+  // ---- node positions: irregular spacing, mostly alternating sides, sometimes not ----
+  const pts = []; let y = TOP;
+  for (let i = 0; i < TOTAL; i++) {
+    let left = i % 2 === 0;
+    if (i > 1 && i < TOTAL - 1 && rng() < 0.24) left = !left;
+    let x = left ? W * (0.15 + rng() * 0.22) : W * (0.63 + rng() * 0.22);
+    if (i === 0) x = W * 0.2;
+    if (i === TOTAL - 1) x = W * 0.5;
+    pts.push({x, y, left});
+    y += 118 + rng() * 70;
+  }
+  const H = y + 40;
+
+  // ---- road: through every node plus a wobbly waypoint between each pair ----
+  const rp = [];
+  pts.forEach((p, i) => {
+    rp.push({x:p.x, y:p.y});
+    if (i < TOTAL - 1) {
+      const q = pts[i+1];
+      rp.push({x:(p.x+q.x)/2 + (rng()-.5)*W*0.26, y:(p.y+q.y)/2 + (rng()-.5)*34});
+    }
+  });
+  const roadD = smoothOpen(rp);
+  const road = measurePath(roadD, 9);
+
+  // ---- river: meanders widely with irregular spacing ----
+  const rv = [{x:W*(0.3+rng()*0.4), y:-20}];
+  for (let ry = 150 + rng()*80; ry < H - 80; ry += 170 + rng()*130)
+    rv.push({x: W*(0.08 + rng()*0.84), y: ry});
+  rv.push({x:W*(0.3+rng()*0.4), y:H+20});
+  const riverD = smoothOpen(rv);
+  const river = measurePath(riverD, 12);
+
+  // ---- label rectangles (estimate) so scenery keeps clear of text ----
+  const rects = pts.map((p, i) => {
+    const cell = BOARD[i];
+    const txt = cell.type === 'q' ? cell.t + '?' : (cell.type === 'start' ? 'Start' : 'Finish!');
+    const toRight = cell.type === 'finish' ? true : p.left;
+    const maxW = cell.type === 'finish' ? W - p.x - 58 : (p.left ? W - p.x - 50 : p.x - 50);
+    const w = Math.min(maxW, txt.length * 11.5 + 30), h = w >= maxW - 2 ? 80 : 46;
+    const x1 = toRight ? p.x + 44 : p.x - 44 - w;
+    return {x1, x2: x1 + w, y1: p.y - h/2, y2: p.y + h/2, cx: p.x, cy: p.y, r: cell.type === 'finish' ? 46 : 38};
+  });
+
+  const nearRoad = (x, y, d) => { for (const q of road) { const dx = q.x-x, dy = q.y-y; if (dx*dx+dy*dy < d*d) return true; } return false; };
+  const nearRiver = (x, y, d) => { for (const q of river) { const dx = q.x-x, dy = q.y-y; if (dx*dx+dy*dy < d*d) return true; } return false; };
+  const hitsUI = (x, y, half) => rects.some(r =>
+      (x > r.x1 - half && x < r.x2 + half && y > r.y1 - half && y < r.y2 + half) ||
+      (Math.hypot(x - r.cx, y - r.cy) < r.r + half + 16) ||
+      (Math.abs(x - r.cx) < half + 40 && y < r.cy && y > r.cy - 90 - half));   // tokens sit above nodes
+
+  // ---- zone y-ranges and background gradient ----
+  const zr = ZONES.map(z => {
+    const a = z.from === 0 ? 0 : (pts[z.from-1].y + pts[z.from].y) / 2;
+    const lastIdx = Math.min(z.to, TOTAL - 1);
+    const b = lastIdx >= TOTAL - 1 ? H : (pts[lastIdx].y + pts[lastIdx+1].y) / 2;
+    return {...z, a, b};
+  });
+  let stops = '';
+  zr.forEach(z => {
+    const len = z.b - z.a;
+    stops += `<stop offset="${((z.a + len*0.22)/H).toFixed(3)}" stop-color="${z.bg}"/><stop offset="${((z.b - len*0.22)/H).toFixed(3)}" stop-color="${z.bg}"/>`;
+  });
+
+  // ---- ground texture per zone ----
+  let ground = '';
+  zr.forEach(z => {
+    const n = Math.round((z.b - z.a) / 16);
+    for (let k = 0; k < n; k++) {
+      const x = rng() * W, yy = z.a + rng() * (z.b - z.a);
+      if (z.name === 'meadow' || z.name === 'castle') {
+        if (k % 5 === 0) ground += `<path d="${blob(x, yy, 30+rng()*40, 18+rng()*22, rng)}" fill="${rng()<.5?'#bcd98c':'#dcebb0'}" opacity=".7"/>`;
+        if (k % 3 === 0) ground += `<path d="M${f1(x)} ${f1(yy)} l-3 -7 M${f1(x)} ${f1(yy)} l0 -9 M${f1(x)} ${f1(yy)} l3 -7" stroke="#86b05a" stroke-width="2" stroke-linecap="round" fill="none"/>`;
+        if (k % 7 === 0) ground += `<circle cx="${f1(x)}" cy="${f1(yy)}" r="2.6" fill="${['#f7c9d4','#fff','#f6dc6b'][k%3]}"/>`;
+      } else if (z.name === 'forest') {
+        if (k % 4 === 0) ground += `<path d="${blob(x, yy, 30+rng()*50, 20+rng()*30, rng)}" fill="${rng()<.6?'#86ad66':'#b9d595'}" opacity=".6"/>`;
+        if (k % 3 === 0) ground += `<path d="M${f1(x)} ${f1(yy)} l-3 -7 M${f1(x)} ${f1(yy)} l0 -9 M${f1(x)} ${f1(yy)} l3 -7" stroke="#6f9a52" stroke-width="2" stroke-linecap="round" fill="none"/>`;
+      } else if (z.name === 'desert') {
+        if (k % 4 === 0) ground += `<path d="${blob(x, yy, 40+rng()*50, 16+rng()*20, rng)}" fill="${rng()<.5?'#e3c985':'#f6e9bd'}" opacity=".7"/>`;
+        const w = 24 + rng() * 40;
+        ground += `<path d="M${f1(x)} ${f1(yy)} q${f1(w/2)} -${f1(8+rng()*8)} ${f1(w)} 0" stroke="#cfae63" stroke-width="3" fill="none" stroke-linecap="round" opacity=".8"/>`;
+      } else if (z.name === 'mountain') {
+        if (k % 4 === 0) ground += `<path d="${blob(x, yy, 26+rng()*44, 16+rng()*26, rng)}" fill="${rng()<.5?'#ffffff':'#bdbdb3'}" opacity=".7"/>`;
+        if (k % 6 === 0) ground += `<circle cx="${f1(x)}" cy="${f1(yy)}" r="${f1(2+rng()*3)}" fill="#a9a9a0"/>`;
+      } else if (z.name === 'swamp') {
+        if (k % 4 === 0) ground += `<path d="${blob(x, yy, 26+rng()*40, 16+rng()*22, rng)}" fill="${rng()<.55?'#7f9f86':'#c9d49b'}" opacity=".7"/>`;
+        if (k % 3 === 0) ground += `<path d="M${f1(x)} ${f1(yy)} l0 -14 M${f1(x)} ${f1(yy)} l-4 -10 M${f1(x)} ${f1(yy)} l4 -10" stroke="#5f7f45" stroke-width="2" stroke-linecap="round" fill="none"/><circle cx="${f1(x)}" cy="${f1(yy-15)}" r="2.8" fill="#7a5a2c"/>`;
+      }
+    }
+  });
+
+  // ---- lakes (wherever there's room, never on the road) ----
+  const obstacles = [];
+  let lakes = '';
+  [['meadow',0],['forest',0],['forest',1],['swamp',0],['castle',0]].forEach(([zn]) => {
+    const z = zr.find(q => q.name === zn);
+    for (let t = 0; t < 120; t++) {
+      const rx = 34 + rng() * 34, ry = 20 + rng() * 22;
+      const x = rx + rng() * (W - 2*rx), yy = z.a + 30 + rng() * (z.b - z.a - 60);
+      if (nearRoad(x, yy, rx + 22) || hitsUI(x, yy, rx) || obstacles.some(o => Math.hypot(o.x-x, o.y-yy) < o.r + rx + 20)) continue;
+      const fill = zn === 'swamp' ? '#7fa593' : '#8fd0ea', edge = zn === 'swamp' ? '#5f8472' : '#6fb0cf';
+      lakes += `<path d="${blob(x, yy, rx+7, ry+7, rng)}" fill="${edge}" opacity=".6"/><path d="${blob(x, yy, rx, ry, rng)}" fill="${fill}"/><path d="M${f1(x-rx*.4)} ${f1(yy-ry*.1)} q${f1(rx*.3)} -6 ${f1(rx*.6)} 0" stroke="#fff" stroke-width="3" fill="none" opacity=".6" stroke-linecap="round"/>`;
+      obstacles.push({x, y: yy, r: Math.max(rx, ry) + 4});
+      break;
+    }
+  });
+
+  // ---- scenery: random sizes and spots, clear of road / river / labels / each other ----
+  const items = [];
+  zr.forEach(z => {
+    const pool = POOL[z.name];
+    const n = Math.round((z.b - z.a) / 46);
+    for (let k = 0; k < n; k++) {
+      const [e, mn, mx] = pool[Math.floor(rng() * pool.length)];
+      items.push({e, size: mn + Math.pow(rng(), 1.3) * (mx - mn), z});
+    }
+    if (z.name === 'mountain') ['⛰️','🏔️','🗻','⛰️'].forEach(e => items.push({e, size: 96 + rng()*28, z}));
+    const m = z.name === 'castle' ? 0 : 1 + (rng() < .5 ? 1 : 0);
+    for (let k = 0; k < m; k++) items.push({e: MONSTERS[Math.floor(rng()*MONSTERS.length)], size: 52 + rng() * 18, z});
+  });
+  items.sort((p, q) => q.size - p.size);
+  const placed = [];
+  items.forEach(it => {
+    for (let t = 0; t < 500; t++) {
+      const big = it.size >= 80;
+      const x = it.size*0.4 + rng() * (W - it.size*0.8), yy = it.z.a + rng() * (it.z.b - it.z.a);
+      const half = it.size * 0.5;
+      if (nearRoad(x, yy, big ? half*0.62 + 8 : half + 14) || (!big && nearRiver(x, yy, half*0.8 + 8)) || hitsUI(x, yy, big ? half*0.7 : half)) continue;
+      if (placed.some(o => Math.hypot(o.x-x, o.y-yy) < (o.size + it.size) * 0.44)) continue;
+      if (obstacles.some(o => Math.hypot(o.x-x, o.y-yy) < o.r + half*0.7)) continue;
+      placed.push({x, y: yy, size: it.size, e: it.e});
+      break;
+    }
+  });
+  placed.sort((p, q) => p.y - q.y);
+  const scenery = placed.map(p => `<div class="scenery" style="left:${f1(p.x)}px;top:${f1(p.y)}px;font-size:${Math.round(p.size)}px">${p.e}</div>`).join('');
+
+  const svg = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+    <defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1">${stops}</linearGradient></defs>
+    <rect width="${W}" height="${H}" fill="url(#g)"/>
+    ${ground}${lakes}
+    <path d="${riverD}" stroke="#6fb0cf" stroke-width="30" fill="none" stroke-linecap="round" opacity=".75"/>
+    <path d="${riverD}" stroke="#93d3ec" stroke-width="21" fill="none" stroke-linecap="round"/>
+    <path d="${riverD}" stroke="#fff" stroke-width="3" fill="none" stroke-dasharray="10 22" stroke-linecap="round" opacity=".55"/>
+    <path d="${roadD}" stroke="#7a5420" stroke-width="22" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="${roadD}" stroke="#f0d28a" stroke-width="16" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="${roadD}" stroke="#b98a3e" stroke-width="3" fill="none" stroke-dasharray="2 12" stroke-linecap="round"/>
+  </svg>`;
+  return {W, H, pts, staticHtml: svg + scenery};
+}
+
+function renderTrail(state) {
+  const wrap = document.getElementById('trail-wrap');
+  const sc = document.getElementById('trail-scroll');
+  const W = Math.max(280, sc.clientWidth || 340);
+  if (!mapCache || mapCache.W !== W) mapCache = buildMap(W);
+  const {H, pts} = mapCache;
+  const myPos = myPlayer(state)?.pos ?? -1;
+
+  let html = mapCache.staticHtml;
+  BOARD.forEach((cell, i) => {
+    const p = pts[i];
+    let cls = 'node';
+    if (cell.type === 'start') cls += ' start';
+    if (cell.type === 'finish') cls += ' finish';
+    if (i === myPos) cls += ' mine';
+    if (i === state.lastLand) cls += ' landed';
+    const inner = cell.type === 'start' ? '🚩' : (cell.type === 'finish' ? '🏰' : i);
+    html += `<div class="${cls}" data-idx="${i}" style="left:${f1(p.x)}px;top:${f1(p.y)}px">${inner}</div>`;
+
+    const label = cell.type === 'q' ? esc(cell.t) + '?' : (cell.type === 'start' ? 'Start' : 'Finish!');
+    const lc = cell.type === 'q' ? '' : ' ' + cell.type;
+    if (cell.type === 'finish') {
+      html += `<div class="nlabel${lc}" style="left:${f1(p.x + 50)}px;top:${f1(p.y)}px;max-width:${f1(W - p.x - 58)}px">${label}</div>`;
+    } else if (p.left) {
+      html += `<div class="nlabel${lc}" style="left:${f1(p.x + 42)}px;top:${f1(p.y)}px;max-width:${f1(W - p.x - 50)}px">${label}</div>`;
+    } else {
+      html += `<div class="nlabel${lc}" style="right:${f1(W - p.x + 42)}px;top:${f1(p.y)}px;max-width:${f1(p.x - 50)}px">${label}</div>`;
+    }
+
+    const here = state.players.filter(pl => pl.pos === i);
+    if (here.length) {
+      const tw = Math.min(here.length, 2) * 40;
+      const cx = Math.min(Math.max(p.x, tw / 2 + 4), W - tw / 2 - 4);
+      html += `<div class="ntokens" style="left:${f1(cx)}px;top:${f1(p.y - 32)}px;width:${tw}px">${here.map(pl => `<span class="token">${pl.avatar}</span>`).join('')}</div>`;
+    }
+  });
+
+  wrap.style.height = H + 'px';
+  wrap.innerHTML = html;
+  const t = pts[Math.max(0, state.lastLand >= 0 ? state.lastLand : myPos)];
+  sc.scrollTop = Math.max(0, t.y - sc.clientHeight / 2);
+}
+window.addEventListener('resize', () => { if (localState && localState.phase === 'playing') renderTrail(localState); });
+
+function renderDie(mine) {
+  const btn = document.getElementById('roll-btn');
+  btn.disabled = !mine || hasRolled;
+  btn.textContent = mine ? (hasRolled ? 'Rolling...' : 'Roll the dice') : 'Wait for your turn';
+}
+
+function renderGamePlayers(state) {
+  const turnIdx = state.turn % state.players.length;
+  document.getElementById('game-players').innerHTML = state.players.map((p, i) => {
+    const isCurrent = i === turnIdx;
+    const pct = Math.round((p.pos / (TOTAL - 1)) * 100);
+    return `<div class="gp-row">
+      <span class="gp-avatar">${p.avatar}</span>
+      <span class="gp-name" style="${isCurrent?'color:var(--green-d)':''}">${esc(p.name)}${p.id===myId?' (you)':''}</span>
+      <div class="progress-wrap"><div class="progress-fill" style="width:${pct}%;background:${isCurrent?'var(--green)':'var(--line)'}"></div></div>
+      <span class="gp-pos">${p.pos}/${TOTAL-1}</span>
+    </div>`;
+  }).join('');
+}
+
+// ===================== ROLLING =====================
+async function rollDie() {
+  if (!localState || !isMyTurn(localState) || hasRolled) return;
+  hasRolled = true; renderDie(false);
+  const roll = Math.floor(Math.random() * 6) + 1;
+  animateDie(roll);
+  document.getElementById('die-result').textContent = 'You rolled a ' + roll + '!';
+
+  const state = JSON.parse(JSON.stringify(localState));
+  const cp = state.players[state.turn % state.players.length];
+  if (cp.id !== myId) { hasRolled = false; return; }
+
+  const newPos = Math.min(cp.pos + roll, TOTAL - 1);
+  cp.pos = newPos; state.lastLand = newPos; state.lastLander = myId;
+  state.log = cp.avatar + ' ' + cp.name + ' rolled a ' + roll + '.';
+
+  if (newPos >= TOTAL - 1) {
+    state.phase = 'won'; state.winner = myId;
+    state.log = '🏆 ' + cp.avatar + ' ' + cp.name + ' wins!';
+  } else {
+    state.turn = state.turn + 1;
+  }
+  await roomRef.set(state);
+  setTimeout(() => { hasRolled = false; if (localState) renderDie(isMyTurn(localState)); }, 1200);
+}
+
+function animateDie(val) {
+  const el = document.getElementById('die');
+  el.classList.remove('die-rolling'); void el.offsetWidth; el.classList.add('die-rolling');
+  let i = 0;
+  const t = setInterval(() => {
+    drawDie(Math.floor(Math.random() * 6) + 1);
+    if (++i > 10) { clearInterval(t); drawDie(val); el.classList.remove('die-rolling'); }
+  }, 55);
+}
+
+// ===================== WINNER =====================
+function renderWinner(state) {
+  if (stateListener && roomRef) roomRef.off('value', stateListener);
+  const w = state.players.find(p => p.id === state.winner);
+  document.getElementById('winner-avatar').textContent = w ? w.avatar : '🏆';
+  document.getElementById('winner-name').textContent = (w ? w.name : 'Someone') + ' wins!';
+  show('winner-screen');
+}
+
+// ===================== LEAVE =====================
+function leaveGame() {
+  if (stateListener && roomRef) roomRef.off('value', stateListener);
+  if (roomRef && localState && localState.phase !== 'won') {
+    localState.players = localState.players.filter(p => p.id !== myId);
+    if (localState.players.length === 0) roomRef.remove();
+    else { if (localState.host === myId) localState.host = localState.players[0].id; roomRef.set(localState); }
+  }
+  clearSession();
+  roomRef=null; stateListener=null; localState=null;
+  myId=null; roomCode=''; hasRolled=false;
+  document.getElementById('player-name').value='';
+  document.getElementById('room-input').value='';
+  document.getElementById('header-room-badge').style.display='none';
+  document.getElementById('lobby-error').textContent='';
+  show('lobby');
+}
+
+restoreSession();
+</script>
+</body>
+</html>
