@@ -278,7 +278,7 @@ async function joinClass(){
   if(!name){ homeErr('Type your name.'); return; }
   if(!UI.sex){ homeErr('Choose she or he.'); return; }
   if($('#inNum')&&!num){ homeErr('Type your student number.'); return; }
-  if(code.length!==4){ homeErr('Type the 4-letter class code.'); return; }
+  if(code.length!==4){ homeErr('Type the 4-letter host code.'); return; }
   $('#goBtn').disabled=true;
   try{
     const sn=await db.ref(ROOT+'/'+code).once('value');
@@ -326,24 +326,37 @@ function topBar(){
   return `<div class="top"><div class="pips">${pips}</div><span class="chip">${esc(ME.name)}</span></div>`;
 }
 function renderHome(msg){
+  UI.view='home';
   const saved=lsGet(SESS);
-  const num=SHEET_URL?`<div><label>STUDENT NUMBER</label><input id="inNum" type="tel" inputmode="numeric" maxlength="12" value="${esc(lsGet('fm_num')||'')}" autocomplete="off"></div>`:'';
-  const code=(qp.get('c')||'').toUpperCase().slice(0,4);
   app.innerHTML=`
   <div class="hero"><div class="em">🏠</div><h1 class="logo" style="font-size:46px">Flatmate Finder</h1><p class="sub center">Find your best flatmate. Meet three people.</p></div>
   ${saved?`<div class="panel"><p class="sub">You have a class open.</p><button class="btn gold" data-act="resume">Back to my class</button><button class="btn ghost" data-act="forget">Start new</button></div>`:''}
   <div class="panel">
-    <div><label>YOUR NAME</label><input id="inName" type="text" maxlength="14" value="${esc(lsGet('fm_name')||'')}" autocomplete="off"></div>
-    <div><label>I AM…</label><div class="seg" id="sexSeg"><button data-act="sex" data-v="f" class="${UI.sex==='f'?'on':''}">She</button><button data-act="sex" data-v="m" class="${UI.sex==='m'?'on':''}">He</button></div></div>
-    ${num}
-    <div><label>CLASS CODE</label><input id="inCode" type="text" maxlength="4" value="${esc(code)}" autocomplete="off" autocapitalize="characters" style="text-transform:uppercase;letter-spacing:8px;text-align:center"></div>
-    <p class="err" id="err">${esc(msg||UI.err||'')}</p>
-    <button class="btn" id="goBtn" data-act="go">Join class</button>
+    ${msg?`<p class="err">${esc(msg)}</p>`:''}
+    <button class="btn" data-act="joinGo">Join a class</button>
+    <button class="btn gold" data-act="hostGo">Host a class</button>
+    <p class="sub center">Students: tap Join. Teacher: tap Host.</p>
   </div>
   <div class="panel steps">
     <div><i>1</i><span>Choose what you want in a flatmate.</span></div>
     <div><i>2</i><span>Answer questions about you.</span></div>
     <div><i>3</i><span>Interview classmates and get points.</span></div>
+  </div>`;
+}
+function renderJoin(msg){
+  UI.view='join';
+  const num=SHEET_URL?`<div><label>STUDENT NUMBER</label><input id="inNum" type="tel" inputmode="numeric" maxlength="12" value="${esc(lsGet('fm_num')||'')}" autocomplete="off"></div>`:'';
+  const code=(qp.get('c')||'').toUpperCase().slice(0,4);
+  app.innerHTML=`
+  <div class="hero"><div class="em">🙋</div><h1 class="logo" style="font-size:40px">Join a class</h1></div>
+  <div class="panel">
+    <div><label>YOUR NAME</label><input id="inName" type="text" maxlength="14" value="${esc(lsGet('fm_name')||'')}" autocomplete="off"></div>
+    <div><label>I AM…</label><div class="seg" id="sexSeg"><button data-act="sex" data-v="f" class="${UI.sex==='f'?'on':''}">She</button><button data-act="sex" data-v="m" class="${UI.sex==='m'?'on':''}">He</button></div></div>
+    ${num}
+    <div><label>HOST CODE</label><input id="inCode" type="text" maxlength="4" value="${esc(code)}" autocomplete="off" autocapitalize="characters" style="text-transform:uppercase;letter-spacing:8px;text-align:center"></div>
+    <p class="err" id="err">${esc(msg||UI.err||'')}</p>
+    <button class="btn" id="goBtn" data-act="go">Join class</button>
+    <button class="btn ghost" data-act="homeBack">Back</button>
   </div>`;
 }
 function stageHead(label,right){ return `<div class="stage"><b>${label}</b><span>${right||''}</span></div>`; }
@@ -515,29 +528,31 @@ async function tCreate(){
 }
 function tWatch(code){
   if(TREF&&TCB) TREF.off('value',TCB);
-  TCODE=code; TREF=db.ref(ROOT+'/'+code); TCB=TREF.on('value',sn=>{ TDATA=sn.val(); renderTeacher(); });
+  TCODE=code; TREF=db.ref(ROOT+'/'+code); TCB=TREF.on('value',sn=>{ TDATA=sn.val(); if(UI.view==='teacher') renderTeacher(); });
 }
 function renderTeacher(){
+  UI.view='teacher';
   if(!TCODE){ const c=lsGet('fm_tcode'); if(c&&FB_OK){ tWatch(c); } }
   if(!TCODE||!TDATA||!TDATA.created){
-    app.innerHTML=`<div class="hero"><div class="em">👩‍🏫</div><h1 class="logo" style="font-size:38px">Teacher</h1></div>
-    <div class="panel"><p class="sub">Make a class code. Students type it to join.</p><button class="btn" data-act="tNew">New class</button>
-    <div><label>OR OPEN A CLASS CODE</label><input id="tIn" type="text" maxlength="4" autocapitalize="characters" style="text-transform:uppercase;letter-spacing:8px;text-align:center"></div>
-    <button class="btn ghost" data-act="tOpen">Open</button></div>`;
+    app.innerHTML=`<div class="hero"><div class="em">👩‍🏫</div><h1 class="logo" style="font-size:38px">Host a class</h1></div>
+    <div class="panel"><p class="sub">Make a host code. Students type it to join.</p><button class="btn" data-act="tNew">Make a host code</button>
+    <div><label>OR OPEN AN OLD HOST CODE</label><input id="tIn" type="text" maxlength="4" autocapitalize="characters" style="text-transform:uppercase;letter-spacing:8px;text-align:center"></div>
+    <button class="btn ghost" data-act="tOpen">Open</button>
+    <button class="btn ghost" data-act="homeBack">Back</button></div>`;
     return;
   }
   const p=TDATA.p||{}; const ids=Object.keys(p).sort((a,b)=>String(p[a].name).localeCompare(String(p[b].name)));
   const done=ids.filter(k=>p[k].ph==='final').length;
-  const link=location.origin&&location.origin!=='null'?location.href.split('#')[0].split('?')[0]+'?c='+TCODE:'';
   const rows=ids.map(k=>{ const q=p[k]; const cs=[1,2,3].map(r=>q['c'+r]&&p[q['c'+r]]?p[q['c'+r]].name:'').filter(Boolean).join(', ');
     return `<tr><td>${esc(q.name)}</td><td>${esc(stageLabel(q))}</td><td>${esc(cs)}</td></tr>`; }).join('');
-  app.innerHTML=`<div class="hero"><h1 class="logo" style="font-size:34px">Class code</h1></div>
+  app.innerHTML=`<div class="hero"><h1 class="logo" style="font-size:34px">Host code</h1></div>
   <div class="code">${esc(TCODE)}</div>
-  ${link?`<p class="sub center" style="word-break:break-all">${esc(link)}</p>`:''}
+  <p class="sub center">Write this code on the board. Students tap Join and type it.</p>
   <div class="panel"><p class="sub center"><b style="color:var(--gold)">${ids.length}</b> students joined · <b style="color:var(--teal)">${done}</b> finished</p></div>
   <div class="tr"><h3>Students</h3><table><tr><th>Name</th><th>Where</th><th>Candidates</th></tr>${rows||'<tr><td colspan="3">Nobody yet.</td></tr>'}</table></div>
   <button class="btn red" data-act="tDelAsk">Delete this class</button>
-  <button class="btn ghost" data-act="tClose">New class code</button>`;
+  <button class="btn ghost" data-act="tClose">Make a different host code</button>
+  <button class="btn ghost" data-act="homeBack">Back to home</button>`;
 }
 
 /* ============ MODAL ============ */
@@ -555,6 +570,9 @@ function onAct(b){
   const a=b.dataset.act;
   if(a==='sex'){ UI.sex=b.dataset.v; document.querySelectorAll('#sexSeg button').forEach(x=>x.classList.toggle('on',x===b)); return; }
   if(a==='go'){ joinClass(); return; }
+  if(a==='joinGo'){ renderJoin(''); window.scrollTo(0,0); return; }
+  if(a==='hostGo'){ renderTeacher(); window.scrollTo(0,0); return; }
+  if(a==='homeBack'){ renderHome(''); window.scrollTo(0,0); return; }
   if(a==='resume'){ resumeSaved().then(ok=>{ if(!ok) renderHome('That class is not there any more.'); }); return; }
   if(a==='forget'){ lsDel(SESS); renderHome(''); return; }
   if(a==='leave'){ goHome(''); return; }
