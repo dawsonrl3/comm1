@@ -95,6 +95,8 @@ details.help .wishes{margin-top:10px}
 .qh{display:flex;align-items:center;gap:8px;font-size:13px;letter-spacing:1.5px;color:var(--gold);font-weight:900}
 .qh .ic{font-size:22px;letter-spacing:0}
 .qs{font-size:19px;line-height:1.35;font-weight:800}
+.hint{color:var(--gold);font-weight:800}
+.qn{font-size:13px;color:var(--mute);margin:-2px 0 8px}
 .blank{display:inline-block;min-width:54px;border-bottom:3px solid var(--gold);height:1em;vertical-align:-3px;margin:0 2px}
 .opts4{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .o4{background:var(--panel2);border:2px solid var(--line);border-radius:12px;padding:10px 8px;font-size:15px;font-weight:800;line-height:1.25;text-align:center;min-height:52px}
@@ -181,14 +183,14 @@ const clone = o => JSON.parse(JSON.stringify(o));
 /* ============ CONTENT ============ */
 // 8 categories. t = third person ("has a car"), b = base form ("have a car"), qa = full question.
 const CAT = [
- {lab:'Transport', ic:['🚗','🏍️','🚲','🚃'], t:['has a car','has a motorbike','rides a bike','takes the train'], b:['have a car','have a motorbike','ride a bike','take the train'], qa:'How does {n} get around?'},
- {lab:'Home', ic:['🔑','👪','🏢','👥'], t:['lives alone','lives with {p} parents','lives in a dorm','lives with a roommate'], b:['live alone','live with {p} parents','live in a dorm','live with a roommate'], qa:'Where does {n} live?'},
- {lab:'Texts', ic:['⚡','⏰','📅','🐌'], t:['replies in a minute','replies in an hour','replies the next day','replies once a week'], b:['reply in a minute','reply in an hour','reply the next day','reply once a week'], qa:'How fast does {n} reply to texts?'},
- {lab:'Money', ic:['🎤','👗','🎮','🍜'], t:['spends money on concerts','spends money on clothes','spends money on games','spends money on food'], b:['spend money on concerts','spend money on clothes','spend money on games','spend money on food'], qa:'What does {n} spend money on?'},
- {lab:'Music', ic:['🌸','💜','🎸','🎧'], t:['listens to J-Pop','listens to K-Pop','listens to rock','listens to hip-hop'], b:['listen to J-Pop','listen to K-Pop','listen to rock','listen to hip-hop'], qa:'What music does {n} listen to?'},
- {lab:'Day off', ic:['📺','🎮','⚽','😴'], t:['watches anime','plays video games','plays soccer','sleeps all day'], b:['watch anime','play video games','play soccer','sleep all day'], qa:'What does {n} do on a day off?'},
- {lab:'Instagram', ic:['📸','🗓️','📆','🚫'], t:['posts every day','posts once a week','posts once a month','never posts'], b:['post every day','post once a week','post once a month','never post'], qa:'How often does {n} post on Instagram?'},
- {lab:'Date spot', ic:['🌃','🐧','🎤','🏮'], t:['wants to go to Mount Inasa','wants to go to the Penguin Aquarium','wants to go to karaoke','wants to go to Chinatown'], b:['want to go to Mount Inasa','want to go to the Penguin Aquarium','want to go to karaoke','want to go to Chinatown'], qa:'Where does {n} want to go on a date?'}
+ {lab:'Transport', ic:['🚗','🏍️','🚲','🚃'], t:['has a car','has a motorbike','rides a bike','takes the train'], b:['have a car','have a motorbike','ride a bike','take the train'], qa:'How does {n} get around?', q3:'How ___ {n} ___ around?'},
+ {lab:'Home', ic:['🔑','👪','🏢','👥'], t:['lives alone','lives with {p} parents','lives in a dorm','lives with a roommate'], b:['live alone','live with {p} parents','live in a dorm','live with a roommate'], qa:'Where does {n} live?', q3:'Where ___ {n} ___?'},
+ {lab:'Texts', ic:['⚡','⏰','📅','🐌'], t:['replies in a minute','replies in an hour','replies the next day','replies once a week'], b:['reply in a minute','reply in an hour','reply the next day','reply once a week'], qa:'How fast does {n} reply to texts?', q3:'How fast ___ {n} ___ to texts?'},
+ {lab:'Money', ic:['🎤','👗','🎮','🍜'], t:['spends money on concerts','spends money on clothes','spends money on games','spends money on food'], b:['spend money on concerts','spend money on clothes','spend money on games','spend money on food'], qa:'What does {n} spend money on?', q3:'What ___ {n} ___ money on?'},
+ {lab:'Music', ic:['🌸','💜','🎸','🎧'], t:['listens to J-Pop','listens to K-Pop','listens to rock','listens to hip-hop'], b:['listen to J-Pop','listen to K-Pop','listen to rock','listen to hip-hop'], qa:'What music does {n} listen to?', q3:'What music ___ {n} ___ to?'},
+ {lab:'Day off', ic:['📺','🎮','⚽','😴'], t:['watches anime','plays video games','plays soccer','sleeps all day'], b:['watch anime','play video games','play soccer','sleep all day'], qa:'What does {n} do on a day off?', q3:'What ___ {n} ___ on a day off?'},
+ {lab:'Instagram', ic:['📸','🗓️','📆','🚫'], t:['posts every day','posts once a week','posts once a month','never posts'], b:['post every day','post once a week','post once a month','never post'], qa:'How often does {n} post on Instagram?', q3:'How often ___ {n} ___ on Instagram?'},
+ {lab:'Date spot', ic:['🌃','🐧','🎤','🏮'], t:['wants to go to Mount Inasa','wants to go to the Penguin Aquarium','wants to go to karaoke','wants to go to Chinatown'], b:['want to go to Mount Inasa','want to go to the Penguin Aquarium','want to go to karaoke','want to go to Chinatown'], qa:'Where does {n} want to go on a date?', q3:'Where ___ {n} ___ to go on a date?'}
 ];
 const DB_IC='💔';
 const WOMEN=['Hana','Mio','Yui','Saki','Emi','Nana'];
@@ -199,12 +201,17 @@ const optB = (c,v,n) => CAT[c].b[v].replace(/\{p\}/g,pos(n));
 const wishT = (c,v) => CAT[c].t[v].replace(/\{p\}/g,'their');
 const sent = (n,c,v) => `${cap1(sub(n))} ${optT(c,v,n)}.`;
 const qFull = (n,c) => CAT[c].qa.replace('{n}',esc(n));
-const qBlank = (n,c) => CAT[c].qa.replace('{n}',esc(n)).replace(/\bdoes\b/,'<span class="blank"></span>');
+const BL = '<span class="blank"></span>';
+const qBlank = (n,c) => CAT[c].qa.replace('{n}',esc(n)).replace(/\bdoes\b/,BL+' <span class="hint">(do)</span>');
+const q3 = (n,c) => CAT[c].q3.replace('{n}',esc(n)).replace(/___/g,BL);
+const q3N = c => (CAT[c].q3.match(/___/g)||[]).length;
+const ansBlank = (n,k,v) => { const w=CAT[k].b[v].replace(/\{p\}/g,pos(n)).split(' '); let i=0, pre=''; if(w[0]==='never'){ pre=' never'; i=1; } const rest=w.slice(i+1).join(' '); return cap1(sub(n))+pre+' '+BL+' <span class="hint">('+esc(w[i])+')</span>'+(rest?' <b>'+esc(rest)+'</b>':'')+'.'; };
 const dbQ = (n) => `Does ${esc(n)} have a ${gfOf(n)}?`;
-const dbQBlank = (n) => `<span class="blank"></span> ${esc(n)} have a ${gfOf(n)}?`;
+const dbQBlank = (n) => `${BL} <span class="hint">(do)</span> ${esc(n)} have a ${gfOf(n)}?`;
+const dbQ3 = (n) => `${BL} ${esc(n)} ${BL} a ${gfOf(n)}?`;
 const face = n => URLS[n.toLowerCase()];
 
-const LVINFO = {1:{name:'GUIDED',how:'Read the question. Read the answer sentence.'},2:{name:'FILL IN',how:'Fill the blank in the question. Build the answer from the key words.'},3:{name:'YOUR WORDS',how:'Use only the pictures. Make your own questions and answers.'}};
+const LVINFO = {1:{name:'GUIDED',how:'Read the question. Read the answer sentence.'},2:{name:'FILL IN',how:'Fill the blanks. Change the verb in ( ) if you need to.'},3:{name:'YOUR WORDS',how:'Fill the blanks to ask each question. Answer with full sentences.'}};
 const RMAP = {6:[0,1,2,3,4,5],5:[0,1,2,3,5],4:[0,1,2,5],3:[0,1,4]};
 const LVS = {6:[1,1,1,2,2,3],5:[1,1,2,2,3],4:[1,1,2,3],3:[1,2,3]};
 
@@ -500,23 +507,23 @@ function turnRows(T, asker){
       const rec=L.rec[k]; const done=rec!==undefined;
       if(k===8){
         const truth = pl.decoy===n?1:0;
-        const stem = lv===1?dbQ(n):lv===2?dbQBlank(n):'';
+        const stem = lv===1?dbQ(n):lv===2?dbQBlank(n):dbQ3(n);
         const opts = ['Yes, '+sub(n)+' does.','No, '+sub(n)+' doesn’t.'].map((o,v)=>{ const vv=v===0?1:0; let cls='o4'; if(done) cls += vv===truth?' ok':(rec===vv?' no':' dim'); return `<button class="${cls}" data-act="rec" data-c="8" data-v="${vv}" ${done?'disabled':''}>${esc(o)}</button>`; }).join('');
         const fb = done? `<div class="fbk">${rec===truth?'<span class="ok">✓ Yes, you heard it right!</span>':`<span class="no">✗ ${truth?'Yes':'No'} — ${esc(n)} ${truth?'has':'doesn’t have'} a ${gfOf(n)}.</span>`}${truth?'<span class="pill n">−3 points</span>':''}</div>`:'';
-        return `<div class="qr ${done?'done':''}"><div class="qh"><span class="ic">${DB_IC}</span>${gfOf(n).toUpperCase()}?</div>${stem?`<div class="qs">${stem}</div>`:''}<div class="opts4">${opts}</div>${fb}</div>`;
+        return `<div class="qr ${done?'done':''}"><div class="qh"><span class="ic">${DB_IC}</span>${gfOf(n).toUpperCase()}?</div>${stem?`<div class="qs">${stem}</div>`:''}${lv===3?'<div class="qn">Fill the 2 blanks. Ask the question.</div>':''}<div class="opts4">${opts}</div>${fb}</div>`;
       }
       const truth=val(k);
-      const stem = lv===1?qFull(n,k):lv===2?qBlank(n,k):'';
+      const stem = lv===1?qFull(n,k):lv===2?qBlank(n,k):q3(n,k);
       const opts = CAT[k].t.map((_,v)=>{ let cls='o4'; if(done) cls += v===truth?' ok':(rec===v?' no':' dim'); return `<button class="${cls}" data-act="rec" data-c="${k}" data-v="${v}" ${done?'disabled':''}>${CAT[k].ic[v]} ${esc(optT(k,v,n))}</button>`; }).join('');
       const m = truth===w[k];
       const fb = done? `<div class="fbk">${rec===truth?'<span class="ok">✓ Right!</span>':`<span class="no">✗ ${esc(sent(n,k,truth))}</span>`} <span class="pill ${m?'y':'n'}">${m?`✓ ${esc(pl.client)}’s wish`:`✗ ${esc(pl.client)} wants: ${esc(wishT(k,w[k]))}`}</span></div>`:'';
-      return `<div class="qr ${done?'done':''}"><div class="qh"><span class="ic">${CAT[k].ic[0]}</span>${CAT[k].lab.toUpperCase()}</div>${stem?`<div class="qs">${stem}</div>`:''}<div class="opts4">${opts}</div>${fb}</div>`;
+      return `<div class="qr ${done?'done':''}"><div class="qh"><span class="ic">${CAT[k].ic[0]}</span>${CAT[k].lab.toUpperCase()}</div>${stem?`<div class="qs">${stem}</div>`:''}${lv===3?`<div class="qn">Fill the ${q3N(k)} blanks. Ask the question.</div>`:''}<div class="opts4">${opts}</div>${fb}</div>`;
     }).join('');
     return {known, q, total:rowsK.length};
   } else {
     const rowsA = ansCats.map(k=>{
       if(lv===1) return sentRow(k);
-      if(lv===2) return `<div class="ar"><span class="ic">${CAT[k].ic[val(k)]}</span><div><small>${CAT[k].lab.toUpperCase()}</small><div class="as">${cap1(sub(n))} <span class="blank"></span> <b>${esc(optB(k,val(k),n))}</b></div></div></div>`;
+      if(lv===2) return `<div class="ar"><span class="ic">${CAT[k].ic[val(k)]}</span><div><small>${CAT[k].lab.toUpperCase()}</small><div class="as">${ansBlank(n,k,val(k))}</div></div></div>`;
       return `<div class="ar"><span class="ic">${CAT[k].ic[val(k)]}</span><div><small>${CAT[k].lab.toUpperCase()}</small><div class="as" style="color:var(--mute);font-size:15px">Answer with a full sentence.</div></div></div>`;
     }).join('');
     const dbRow = pl.decoy ? `<div class="ar"><span class="ic">${DB_IC}</span><div><small>${gfOf(n).toUpperCase()}?</small><div class="as">${pl.decoy===n?'Yes, '+sub(n)+' does.':'No, '+sub(n)+' doesn’t.'}</div></div></div>` : '';
@@ -533,7 +540,7 @@ function renderTurn(){
   let body='';
   if(iAsk){
     const need=R.total, got=Object.keys(L.rec).length;
-    body = `<p class="sub">Ask ${pnE} about <b style="color:var(--gold)">${esc(n)}</b>. ${lv===3?'Make your own questions.':'Read the questions aloud.'} Then <b style="color:var(--gold)">tap what you hear</b>.</p>
+    body = `<p class="sub">Ask ${pnE} about <b style="color:var(--gold)">${esc(n)}</b>. ${lv===3?'Fill the blanks, then ask the questions.':'Read the questions aloud.'} Then <b style="color:var(--gold)">tap what you hear</b>.</p>
       <div class="panel"><label>YOU ALREADY KNOW</label><div class="know">${R.known}</div></div>
       ${R.q}
       <button class="btn" data-act="next" ${got>=need?'':'disabled'}>${got>=need?(S.idx<3?'Next person':'Choose the match'):`Ask all ${need} questions (${got}/${need})`}</button>`;
