@@ -135,51 +135,51 @@ const hintOf = w => ' <span class="hint">('+w+')</span>';
 // o[].t: answer template. {S}/{s}/{my} = subject words, {v} = main verb, {nv} = negative verb (don't have), {g} = go/goes, {dont} = don't/doesn't.
 const TOP = [
  {lab:'Cleaning', ic:'🧹', v:['clean','cleans'], q:'How often {do} {s} {v} the kitchen or living room?', o:[
-   {lab:'every day', t:'{S} {v} the kitchen or living room every day.'},
-   {lab:'a few times a week', t:'{S} {v} the kitchen or living room a few times a week.'},
-   {lab:'about once a week', t:'{S} {v} the kitchen or living room about once a week.'},
-   {lab:'about twice a month', t:'{S} {v} the kitchen or living room about twice a month.'}]},
+   {lab:'every day', t:'{S} {v} the kitchen or living room [every day].'},
+   {lab:'a few times a week', t:'{S} {v} the kitchen or living room [a few times a week].'},
+   {lab:'about once a week', t:'{S} {v} the kitchen or living room [about once a week].'},
+   {lab:'about twice a month', t:'{S} {v} the kitchen or living room [about twice a month].'}]},
  {lab:'Bedtime', ic:'🌙', v:['go','goes'], q:'When {do} {s} {v} to bed?', o:[
-   {lab:'before 11 pm', t:'{S} {v} to bed before 11 pm.'},
-   {lab:'at about 12 am', t:'{S} {v} to bed at about 12 am.'},
-   {lab:'at about 1 am', t:'{S} {v} to bed at about 1 am.'},
-   {lab:'after 1:30 am', t:'{S} {v} to bed after 1:30 am.'}]},
+   {lab:'before 11 pm', t:'{S} {v} to bed [before 11 pm].'},
+   {lab:'at about 12 am', t:'{S} {v} to bed [at about 12 am].'},
+   {lab:'at about 1 am', t:'{S} {v} to bed [at about 1 am].'},
+   {lab:'after 1:30 am', t:'{S} {v} to bed [after 1:30 am].'}]},
  {lab:'Shower', ic:'🚿', v:['take','takes'], q:'How long {do} {s} {v} a shower?', o:[
-   {lab:'10 min.', t:'{S} {v} a 10-minute shower.'},
-   {lab:'15 min.', t:'{S} {v} a 15-minute shower.'},
-   {lab:'20 min.', t:'{S} {v} a 20-minute shower.'},
-   {lab:'over 25 min.', t:'{S} {v} a shower for over 25 minutes.'}]},
+   {lab:'10 min.', t:'{S} {v} a [10]-minute shower.'},
+   {lab:'15 min.', t:'{S} {v} a [15]-minute shower.'},
+   {lab:'20 min.', t:'{S} {v} a [20]-minute shower.'},
+   {lab:'over 25 min.', t:'{S} {v} a shower for [over 25 minutes].'}]},
  {lab:'Dishes', ic:'🍽️', v:['wash','washes'], q:'When {do} {s} {v} the dishes?', o:[
-   {lab:'right after eating', t:'{S} {v} the dishes right after eating.'},
-   {lab:'before I go to bed', t:'{S} {v} the dishes before {s} {g} to bed.'},
-   {lab:'the next day', t:'{S} {v} the dishes the next day.'},
-   {lab:'never', t:'{S} never {v} the dishes.'}]},
+   {lab:'right after eating', t:'{S} {v} the dishes [right after eating].'},
+   {lab:'before I go to bed', t:'{S} {v} the dishes [before {s} {g} to bed].'},
+   {lab:'the next day', t:'{S} {v} the dishes [the next day].'},
+   {lab:'never', t:'{S} [never] {v} the dishes.'}]},
  {lab:'Friends', ic:'🧑‍🤝‍🧑', v:['have','has'], q:'How often {do} {s} {v} friends over?', o:[
-   {lab:'often', t:'{S} often {v} friends over.'},
-   {lab:'sometimes', t:'{S} sometimes {v} friends over.'},
-   {lab:'rarely', t:'{S} rarely {v} friends over.'},
-   {lab:'never', t:'{S} never {v} friends over.'}]},
+   {lab:'often', t:'{S} [often] {v} friends over.'},
+   {lab:'sometimes', t:'{S} [sometimes] {v} friends over.'},
+   {lab:'rarely', t:'{S} [rarely] {v} friends over.'},
+   {lab:'never', t:'{S} [never] {v} friends over.'}]},
  {lab:'Music', ic:'🎧', v:['listen','listens'], q:'How {do} {s} {v} to music?', o:[
-   {lab:'with headphones', t:'{S} {v} to music with headphones.'},
-   {lab:'on speakers', t:'{S} {v} to music on speakers.'},
-   {lab:'I play an instrument', v:['play','plays'], t:'{S} {v} an instrument.'},
-   {lab:'I don’t listen to music', t:'{S} {nv} to music.'}]},
- {lab:'Food', ic:'🍙', v:['share','shares'], q:'{Do} {s} {v} food?', o:[
-   {lab:'I share everything', t:'{S} {v} everything.'},
-   {lab:'I share snacks only', t:'{S} {v} snacks only.'},
-   {lab:'I label my food', v:['label','labels'], t:'{S} {v} {my} food.'},
-   {lab:'I never share', t:'{S} never {v} food.'}]},
+   {lab:'with headphones', t:'{S} {v} to music [with headphones].'},
+   {lab:'on speakers', t:'{S} {v} to music [on speakers].'},
+   {lab:'I play an instrument', v:['play','plays'], t:'{S} {v} [an instrument].'},
+   {lab:'I don’t listen to music', t:'{S} [{nv}] to music.'}]},
+ {lab:'Food', ic:'🍙', hv:'share / label', v:['share','shares'], q:'{Do} {s} {v} food?', o:[
+   {lab:'I share everything', t:'{S} {v} [everything].'},
+   {lab:'I share snacks only', t:'{S} {v} [snacks only].'},
+   {lab:'I label my food', v:['label','labels'], t:'{S} {v} [{my} food].'},
+   {lab:'I never share', t:'{S} [never] {v} food.'}]},
  {lab:'Pets', ic:'🐾', v:['have','has'], q:'{Do} {s} {v} a pet?', o:[
-   {lab:'I have a big pet', t:'Yes, {s} {v} a big pet.'},
-   {lab:'I have a small pet', t:'Yes, {s} {v} a small pet.'},
-   {lab:'I want to buy a pet', v:['want','wants'], t:'No, {s} {dont}. {S} {v} to buy a pet.'},
-   {lab:'I don’t have a pet', t:'No, {s} {nv} a pet.'}]}
+   {lab:'I have a big pet', t:'Yes, {s} {v} a [big] pet.'},
+   {lab:'I have a small pet', t:'Yes, {s} {v} a [small] pet.'},
+   {lab:'I want to buy a pet', v:['want','wants'], t:'No, {s} {dont}. {S} {v} [to buy a pet].'},
+   {lab:'I don’t have a pet', t:'No, {s} [{nv}] a pet.'}]}
 ];
 const NT = TOP.length;
 const LVINFO = {
   1:{name:'GUIDED', how:'Read the questions and the answers.'},
-  2:{name:'LESS HELP', how:'Fill in the blanks. You get less help.'},
-  3:{name:'NEW: HE / SHE', how:'He / she grammar. Use the help in ( ).'}
+  2:{name:'LESS HELP', how:'Fill in the blanks. Say the verb and your own answer.'},
+  3:{name:'NEW: HE / SHE', how:'He / she grammar. Copy the first sentence. Use the help in ( ).'}
 };
 
 function person(sex,p){
@@ -190,16 +190,19 @@ function person(sex,p){
 // answer sentence. P = person(), lv = 1 full, 2/3 = blank + (base verb)
 function ansS(t,o,P,lv){
   const T=TOP[t], O=T.o[o], vb=O.v||T.v, base=vb[0];
-  const vv = lv===1 ? vb[P.i] : BL+hintOf(base);
-  const nv = lv===1 ? P.dont+' '+base : BL+hintOf('not '+base);
-  return O.t.replace('{nv}',nv).replace('{v}',vv).replace(/\{S\}/g,P.S).replace(/\{s\}/g,P.s).replace(/\{my\}/g,P.my).replace('{dont}',P.dont).replace('{g}',P.g);
+  // lv 1: full sentence. lv 2: the verb AND the answer part [ ] are blank (no hints; you remember your own answer). lv 3: the verb is blank with the base verb in ( ).
+  const hv = lv===3 || (lv===2 && T.hv);   // Food keeps the verb hint in Round 2
+  const vv = lv===2&&T.hv ? BL+hintOf(T.hv) : hv ? BL+hintOf(base) : lv===2 ? BL : vb[P.i];
+  const nv = lv===2&&T.hv ? BL+hintOf(T.hv) : hv ? BL+hintOf('not '+base) : lv===2 ? BL : P.dont+' '+base;
+  let r = O.t.replace('{nv}',nv).replace('{v}',vv).replace(/\{S\}/g,P.S).replace(/\{s\}/g,P.s).replace(/\{my\}/g,P.my).replace('{dont}',P.dont).replace('{g}',P.g);
+  return lv===2 ? r.replace(/\[[^\]]*\]/g,BL) : r.replace(/[\[\]]/g,'');
 }
 // question sentence. s = word for the person asked about, d = do/does
 function quesS(t,s,d,lv){
   const T=TOP[t], base=T.v[0];
   const dd = lv===1 ? d : (lv===2 ? BL : BL+hintOf('do'));
   const Dd = lv===1 ? cap1(d) : dd;
-  const vv = lv===1 ? base : (lv===2 ? BL : BL+hintOf(base));
+  const vv = lv===1 ? base : (lv===2 ? (T.hv ? BL+hintOf(T.hv) : BL) : BL+hintOf(base));
   return T.q.replace('{Do}',Dd).replace('{do}',dd).replace('{s}',s).replace('{v}',vv);
 }
 const LVR = {1:1,2:2,3:3};
@@ -424,14 +427,14 @@ function renderTalk(){
   let body='';
   if(UI.tab==='q'){
     body=TOP.map((T,t)=>{
-      const done=UI.asked[key][t];
-      return `<button class="qr ${done?'done':''}" data-act="tick" data-t="${t}"><span class="ic">${T.ic}</span><div><small>${T.lab.toUpperCase()}</small><div class="qs">${quesS(t,qWho.q,qWho.d,lv)}</div></div><span class="tick">${done?'✓':''}</span></button>`;
+      const done=UI.asked[key][t]; const lt=(r===3&&t===0)?1:lv;
+      return `<button class="qr ${done?'done':''}" data-act="tick" data-t="${t}"><span class="ic">${T.ic}</span><div><small>${T.lab.toUpperCase()}${lt!==lv?' · MODEL':''}</small><div class="qs">${quesS(t,qWho.q,qWho.d,lt)}</div></div><span class="tick">${done?'✓':''}</span></button>`;
     }).join('');
   } else {
     let P, src;
     if(r===3){ src=c1; P=person(c1?c1.sex:'f',3); } else { src=ME; P=person(ME.sex,1); }
     if(!src||!ready(src)){ body='<p class="sub">No answers found for your first partner. Make up your answers.</p>'; }
-    else body=TOP.map((T,t)=>`<div class="qr" style="cursor:default"><span class="ic">${T.ic}</span><div><small>${T.lab.toUpperCase()}</small><div class="qs">${ansS(t,+src.ans.charAt(t),P,lv)}</div></div></div>`).join('');
+    else body=TOP.map((T,t)=>{ const lt=(r===3&&t===0)?1:lv; return `<div class="qr" style="cursor:default"><span class="ic">${T.ic}</span><div><small>${T.lab.toUpperCase()}${lt!==lv?' · MODEL':''}</small><div class="qs">${ansS(t,+src.ans.charAt(t),P,lt)}</div></div></div>`; }).join('');
   }
   const n=Object.keys(UI.asked[key]).filter(k=>UI.asked[key][k]).length;
   app.innerHTML=`${topBar()}${stageHead(`ROUND ${r} OF 3`,`<span class="badge">${LVINFO[lv].name}</span>`)}
