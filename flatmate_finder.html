@@ -1,0 +1,595 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Flatmate Finder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<style>
+:root{--bg:#06202c;--panel:#0e3144;--panel2:#164559;--line:#2c6a85;--teal:#3de0c0;--gold:#ffd166;--coral:#ff7a59;--ink:#f0fbff;--mute:#9fcbdc;--bad:#ff6b7a;--good:#3ddc97}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:'Nunito',system-ui,-apple-system,'Segoe UI',sans-serif;font-weight:700}
+body{min-height:100vh;min-height:100dvh;background:radial-gradient(800px 420px at 50% -100px,#0d6f78 0%,transparent 70%),radial-gradient(500px 300px at 100% 40%,#0e3a6b 0%,transparent 70%),var(--bg)}
+#app{max-width:520px;margin:0 auto;padding:12px 16px calc(28px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:14px;min-height:100dvh}
+h1,h2,h3,p{margin:0}
+.logo{font-family:'Fredoka',system-ui,sans-serif;font-weight:700;letter-spacing:.5px;line-height:1;background:linear-gradient(90deg,#6af0d0,#ffd166);-webkit-background-clip:text;background-clip:text;color:transparent;text-align:center}
+button{font:inherit;color:inherit;border:0;cursor:pointer;touch-action:manipulation}
+button:disabled{opacity:.45;cursor:default}
+.btn{background:linear-gradient(180deg,#6af0d0,#3de0c0);color:#04332a;font-weight:900;font-size:19px;padding:16px 20px;border-radius:16px;width:100%;box-shadow:0 5px 0 #1f9b82}
+.btn:active:not(:disabled){transform:translateY(3px);box-shadow:0 2px 0 #1f9b82}
+.btn.gold{background:linear-gradient(180deg,#ffe08a,#ffd166);color:#3a2a00;box-shadow:0 5px 0 #b8902c}
+.btn.ghost{background:transparent;color:var(--ink);border:2px solid var(--line);box-shadow:none;font-size:16px;padding:12px 16px}
+.btn.red{background:linear-gradient(180deg,#ff8b98,#ff6b7a);color:#3a0710;box-shadow:0 5px 0 #b0384a}
+.row{display:flex;gap:10px}.row>*{flex:1}
+.sub{color:var(--mute);font-size:16px;line-height:1.45;font-weight:700}
+.center{text-align:center}
+.err{color:var(--bad);min-height:18px;font-size:15px}
+label{font-size:12px;letter-spacing:2px;color:var(--mute);font-weight:900}
+input[type=text],input[type=tel]{width:100%;background:#041822;border:2px solid var(--line);color:var(--ink);border-radius:14px;padding:14px;font:inherit;font-size:20px;font-weight:800;outline:none}
+input:focus{border-color:var(--teal)}
+.panel{background:var(--panel);border:1.5px solid var(--line);border-radius:20px;padding:16px;display:flex;flex-direction:column;gap:10px}
+.top{display:flex;align-items:center;gap:10px}
+.pips{display:flex;gap:4px;flex:1}.pips i{flex:1;height:7px;border-radius:4px;background:var(--panel2)}.pips i.done{background:var(--teal)}.pips i.cur{background:var(--gold)}
+.chip{background:var(--panel2);border:1.5px solid var(--line);border-radius:999px;padding:6px 12px;font-size:14px;font-weight:900;white-space:nowrap}
+.chip.sc{color:var(--gold)}
+.stage{display:flex;justify-content:space-between;align-items:center;font-size:13px;letter-spacing:1px;color:var(--mute)}
+.stage b{color:var(--gold);letter-spacing:1.5px}
+.hero{display:flex;flex-direction:column;align-items:center;gap:8px;padding:10px 0 2px}
+.hero .em{font-size:54px;line-height:1}
+.seg{display:flex;gap:8px}.seg button{flex:1;background:var(--panel2);border:2px solid var(--line);border-radius:14px;padding:12px;font-weight:900;font-size:18px}.seg button.on{background:var(--teal);border-color:var(--teal);color:#04332a}
+.steps{gap:12px;font-size:16px}.steps div{display:flex;align-items:center;gap:12px}.steps i{width:28px;height:28px;border-radius:50%;background:var(--teal);color:#04332a;display:inline-flex;align-items:center;justify-content:center;font-style:normal;font-weight:900;flex:none}
+.steps span{flex:1}
+.code{font-family:'Fredoka',sans-serif;font-size:64px;letter-spacing:12px;text-align:center;color:var(--gold);font-weight:700;padding-left:12px}
+.tcard{background:linear-gradient(135deg,#0e4a5c,#124a6e);border:1.5px solid var(--line);border-radius:22px;padding:16px;display:flex;gap:14px;align-items:center}
+.tcard .ic{font-size:46px;line-height:1}
+.tcard small{font-size:12px;letter-spacing:2px;color:var(--gold);font-weight:900}
+.tcard .qq{font-size:20px;font-weight:800;line-height:1.3;margin-top:2px}
+.opt{background:var(--panel);border:1.5px solid var(--line);border-radius:16px;padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+.opt .ol{font-size:18px;font-weight:800}
+.rt{display:flex;gap:6px}
+.rt button{flex:1;padding:8px 4px;border-radius:12px;font-size:13px;font-weight:900;border:2px solid var(--line);background:var(--panel2);line-height:1.25;color:var(--mute)}
+.rt button span{display:block;font-size:20px;line-height:1.1}
+.rt .g.on{background:#12503c;border-color:var(--good);color:#d6fff0}
+.rt .y.on{background:#5a4a12;border-color:var(--gold);color:#fff1c2}
+.rt .r.on{background:#5a1d2a;border-color:var(--bad);color:#ffd5db}
+.choices{display:flex;flex-direction:column;gap:8px}
+.ch{background:var(--panel2);border:2px solid var(--line);border-radius:14px;padding:14px;font-size:18px;font-weight:800;text-align:left}
+.ch.on{background:#12453a;border-color:var(--teal);color:#d6fff3}
+.badge{display:inline-block;border-radius:999px;padding:4px 12px;font-size:12px;letter-spacing:1px;font-weight:900;background:var(--panel2);border:1.5px solid var(--line);color:var(--gold)}
+.plist{display:flex;flex-direction:column;gap:8px}
+.prow{display:flex;align-items:center;gap:8px;background:var(--panel);border:2px solid var(--line);border-radius:14px;padding:14px 16px;font-size:19px;text-align:left;width:100%}
+.prow small{margin-left:auto;background:var(--panel2);border-radius:8px;padding:2px 8px;color:var(--mute);font-size:12px}
+.prow.sel{border-color:var(--teal);background:#0f4a46}
+.prow.off{opacity:.5}
+.frame{background:#2a2a14;border:1.5px solid var(--gold);border-radius:14px;padding:12px 14px;font-size:18px;line-height:1.5}
+.frame b{color:var(--gold)}
+.tabs{display:flex;gap:8px}
+.tabs button{flex:1;background:var(--panel2);border:2px solid var(--line);border-radius:14px;padding:12px;font-weight:900;font-size:17px}
+.tabs button.on{background:var(--gold);border-color:var(--gold);color:#3a2a00}
+.qr{display:flex;align-items:center;gap:12px;background:var(--panel);border:2px solid var(--line);border-radius:16px;padding:12px;width:100%;text-align:left}
+.qr .ic{font-size:28px;width:38px;text-align:center;flex:none}
+.qr small{display:block;font-size:11px;letter-spacing:1.5px;color:var(--gold);font-weight:900;margin-bottom:2px}
+.qr .qs{font-size:19px;font-weight:800;line-height:1.35}
+.qr .tick{margin-left:auto;width:28px;height:28px;border-radius:50%;border:2px solid var(--line);flex:none;display:flex;align-items:center;justify-content:center;font-size:16px}
+.qr.done{border-color:#2c7a68;background:#0d3a3a}
+.qr.done .tick{background:var(--teal);border-color:var(--teal);color:#04332a}
+.hint{color:var(--gold);font-weight:800}
+.blank{display:inline-block;min-width:50px;border-bottom:3px solid var(--gold);height:1em;vertical-align:-3px;margin:0 2px}
+.who{background:var(--panel);border:1.5px solid var(--line);border-radius:16px;padding:12px 14px;display:flex;flex-direction:column;gap:2px}
+.who small{font-size:12px;letter-spacing:1.5px;color:var(--gold);font-weight:900}
+.who b{font-family:'Fredoka',sans-serif;font-size:26px;font-weight:700}
+.big{text-align:center;font-family:'Fredoka',sans-serif;font-size:72px;font-weight:700;line-height:1}
+.big.pos{color:var(--good)}.big.neg{color:var(--bad)}.big.zero{color:var(--gold)}
+.banner{border-radius:18px;padding:14px;text-align:center;font-family:'Fredoka',sans-serif;font-size:24px;font-weight:700;background:var(--panel);border:2px solid var(--line)}
+.banner.top{background:linear-gradient(135deg,#1fae8f,#3de0c0);color:#04332a;border-color:var(--teal)}
+.rw{display:flex;align-items:center;gap:10px;background:var(--panel);border:1.5px solid var(--line);border-radius:14px;padding:10px 12px}
+.rw .ic{font-size:24px;width:32px;text-align:center;flex:none}
+.rw small{display:block;font-size:11px;letter-spacing:1.5px;color:var(--mute);font-weight:900}
+.rw .v{font-size:17px;font-weight:800}
+.rw .pt{margin-left:auto;font-family:'Fredoka',sans-serif;font-weight:700;font-size:22px;width:38px;text-align:center;border-radius:10px;padding:4px 0;flex:none}
+.pt.g{background:#12503c;color:#d6fff0}.pt.y{background:#5a4a12;color:#fff1c2}.pt.r{background:#5a1d2a;color:#ffd5db}
+.cc{background:var(--panel);border:1.5px solid var(--line);border-radius:18px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.cc.best{border-color:var(--gold);box-shadow:0 0 0 2px rgba(255,209,102,.35)}
+.cc .hd{display:flex;align-items:center;gap:10px}
+.cc .hd b{flex:1;font-family:'Fredoka',sans-serif;font-size:24px;font-weight:700}
+.cc .sc{font-family:'Fredoka',sans-serif;font-size:30px;font-weight:700}
+.cc .sc.pos{color:var(--good)}.cc .sc.neg{color:var(--bad)}.cc .sc.zero{color:var(--gold)}
+.dots{display:flex;gap:4px}
+.dots span{flex:1;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px}
+.dots .g{background:#12503c}.dots .y{background:#5a4a12}.dots .r{background:#5a1d2a}
+.tagb{font-size:11px;letter-spacing:1px;border-radius:6px;padding:2px 7px;font-weight:900;background:var(--gold);color:#3a2a00}
+.say{display:flex;flex-direction:column;gap:6px;font-size:18px;line-height:1.4}
+.say div{background:var(--panel);border-radius:12px;padding:8px 12px;border-left:5px solid var(--good)}
+.say .no{border-left-color:var(--bad)}
+.legend{display:flex;gap:10px;font-size:13px;color:var(--mute);justify-content:center}
+#modal{position:fixed;inset:0;background:rgba(2,12,18,.8);display:flex;align-items:center;justify-content:center;padding:24px;z-index:50}
+#modal .box{background:var(--panel);border:1.5px solid var(--line);border-radius:22px;padding:20px;display:flex;flex-direction:column;gap:12px;max-width:380px;width:100%}
+#modal h3{font-family:'Fredoka',sans-serif;font-size:24px}
+.tr{background:var(--panel);border:1.5px solid var(--line);border-radius:16px;padding:12px}
+.tr h3{font-family:'Fredoka',sans-serif;font-size:20px;margin-bottom:6px}
+.tr table{width:100%;border-collapse:collapse;font-size:13.5px;line-height:1.3}
+.tr td,.tr th{border-bottom:1px solid var(--line);padding:5px 3px;text-align:left;vertical-align:top}
+.tr th{color:var(--gold);font-size:11px}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+/* ============ UTIL ============ */
+const $ = s => document.querySelector(s);
+const app = $('#app');
+const esc = s => String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const cap1 = s => s.charAt(0).toUpperCase()+s.slice(1);
+const lsGet=k=>{try{return localStorage.getItem(k);}catch(e){return null;}};
+const lsSet=(k,v)=>{try{localStorage.setItem(k,v);}catch(e){}};
+const lsDel=k=>{try{localStorage.removeItem(k);}catch(e){}};
+const BL = '<span class="blank"></span>';
+const hintOf = w => ' <span class="hint">('+w+')</span>';
+
+/* ============ CONTENT ============ */
+// q: question template. {Do}/{do} = do/does, {s} = you / she / he, {v} = base verb.
+// o[].t: answer template. {S}/{s}/{my} = subject words, {v} = main verb, {nv} = negative verb (don't have), {g} = go/goes, {dont} = don't/doesn't.
+const TOP = [
+ {lab:'Cleaning', ic:'🧹', v:['clean','cleans'], q:'How often {do} {s} {v} the kitchen or living room?', o:[
+   {lab:'every day', t:'{S} {v} the kitchen or living room every day.'},
+   {lab:'a few times a week', t:'{S} {v} the kitchen or living room a few times a week.'},
+   {lab:'about once a week', t:'{S} {v} the kitchen or living room about once a week.'},
+   {lab:'about twice a month', t:'{S} {v} the kitchen or living room about twice a month.'}]},
+ {lab:'Bedtime', ic:'🌙', v:['go','goes'], q:'When {do} {s} {v} to bed?', o:[
+   {lab:'before 11 pm', t:'{S} {v} to bed before 11 pm.'},
+   {lab:'at about 12 am', t:'{S} {v} to bed at about 12 am.'},
+   {lab:'at about 1 am', t:'{S} {v} to bed at about 1 am.'},
+   {lab:'after 1:30 am', t:'{S} {v} to bed after 1:30 am.'}]},
+ {lab:'Shower', ic:'🚿', v:['take','takes'], q:'How long {do} {s} {v} a shower?', o:[
+   {lab:'10 min.', t:'{S} {v} a 10-minute shower.'},
+   {lab:'15 min.', t:'{S} {v} a 15-minute shower.'},
+   {lab:'20 min.', t:'{S} {v} a 20-minute shower.'},
+   {lab:'over 25 min.', t:'{S} {v} a shower for over 25 minutes.'}]},
+ {lab:'Dishes', ic:'🍽️', v:['wash','washes'], q:'When {do} {s} {v} the dishes?', o:[
+   {lab:'right after eating', t:'{S} {v} the dishes right after eating.'},
+   {lab:'before I go to bed', t:'{S} {v} the dishes before {s} {g} to bed.'},
+   {lab:'the next day', t:'{S} {v} the dishes the next day.'},
+   {lab:'never', t:'{S} never {v} the dishes.'}]},
+ {lab:'Friends', ic:'🧑‍🤝‍🧑', v:['have','has'], q:'How often {do} {s} {v} friends over?', o:[
+   {lab:'often', t:'{S} often {v} friends over.'},
+   {lab:'sometimes', t:'{S} sometimes {v} friends over.'},
+   {lab:'rarely', t:'{S} rarely {v} friends over.'},
+   {lab:'never', t:'{S} never {v} friends over.'}]},
+ {lab:'Music', ic:'🎧', v:['listen','listens'], q:'How {do} {s} {v} to music?', o:[
+   {lab:'with headphones', t:'{S} {v} to music with headphones.'},
+   {lab:'on speakers', t:'{S} {v} to music on speakers.'},
+   {lab:'I play an instrument', v:['play','plays'], t:'{S} {v} an instrument.'},
+   {lab:'I don’t listen to music', t:'{S} {nv} to music.'}]},
+ {lab:'Food', ic:'🍙', v:['share','shares'], q:'{Do} {s} {v} food?', o:[
+   {lab:'I share everything', t:'{S} {v} everything.'},
+   {lab:'I share snacks only', t:'{S} {v} snacks only.'},
+   {lab:'I label my food', v:['label','labels'], t:'{S} {v} {my} food.'},
+   {lab:'I never share', t:'{S} never {v} food.'}]},
+ {lab:'Pets', ic:'🐾', v:['have','has'], q:'{Do} {s} {v} a pet?', o:[
+   {lab:'I have a big pet', t:'Yes, {s} {v} a big pet.'},
+   {lab:'I have a small pet', t:'Yes, {s} {v} a small pet.'},
+   {lab:'I want to buy a pet', v:['want','wants'], t:'No, {s} {dont}. {S} {v} to buy a pet.'},
+   {lab:'I don’t have a pet', t:'No, {s} {nv} a pet.'}]}
+];
+const NT = TOP.length;
+const LVINFO = {
+  1:{name:'GUIDED', how:'Read the questions and the answers.'},
+  2:{name:'LESS HELP', how:'Fill in the blanks. You get less help.'},
+  3:{name:'NEW: HE / SHE', how:'He / she grammar. Use the help in ( ).'}
+};
+
+function person(sex,p){
+  if(p===1) return {S:'I',s:'I',my:'my',dont:'don’t',i:0,g:'go',d:'do',q:'you'};
+  return sex==='f' ? {S:'She',s:'she',my:'her',dont:'doesn’t',i:1,g:'goes',d:'does',q:'she'}
+                   : {S:'He',s:'he',my:'his',dont:'doesn’t',i:1,g:'goes',d:'does',q:'he'};
+}
+// answer sentence. P = person(), lv = 1 full, 2/3 = blank + (base verb)
+function ansS(t,o,P,lv){
+  const T=TOP[t], O=T.o[o], vb=O.v||T.v, base=vb[0];
+  const vv = lv===1 ? vb[P.i] : BL+hintOf(base);
+  const nv = lv===1 ? P.dont+' '+base : BL+hintOf('not '+base);
+  return O.t.replace('{nv}',nv).replace('{v}',vv).replace(/\{S\}/g,P.S).replace(/\{s\}/g,P.s).replace(/\{my\}/g,P.my).replace('{dont}',P.dont).replace('{g}',P.g);
+}
+// question sentence. s = word for the person asked about, d = do/does
+function quesS(t,s,d,lv){
+  const T=TOP[t], base=T.v[0];
+  const dd = lv===1 ? d : (lv===2 ? BL : BL+hintOf('do'));
+  const Dd = lv===1 ? cap1(d) : dd;
+  const vv = lv===1 ? base : (lv===2 ? BL : BL+hintOf(base));
+  return T.q.replace('{Do}',Dd).replace('{do}',dd).replace('{s}',s).replace('{v}',vv);
+}
+const LVR = {1:1,2:2,3:3};
+
+/* ============ FIREBASE ============ */
+const firebaseConfig = {
+  apiKey: "AIzaSyBrsLESE52ZBtE6iXPyO-DU3UstKfcxX48",
+  authDomain: "frequency-adverbs.firebaseapp.com",
+  databaseURL: "https://frequency-adverbs-default-rtdb.firebaseio.com",
+  projectId: "frequency-adverbs",
+  storageBucket: "frequency-adverbs.firebasestorage.app",
+  messagingSenderId: "8272563124",
+  appId: "1:8272563124:web:537beb3582b7a36ef4c0e1",
+  measurementId: "G-D7W5WDM9R6"
+};
+let db=null, FB_OK=false;
+try{ firebase.initializeApp(firebaseConfig); db=firebase.database(); FB_OK=true; }catch(e){ console.error('Firebase init failed',e); }
+const ROOT='flatmate';
+// Paste your Google Apps Script web app URL between the quotes to log results to a Google Sheet (leave empty to turn logging off).
+const SHEET_URL = '';
+const TS=()=>firebase.database.ServerValue.TIMESTAMP;
+
+/* ============ STATE ============ */
+const qp = new URLSearchParams(location.search);
+const PID = qp.get('pid') || lsGet('fm_pid') || ('p'+Math.random().toString(36).slice(2,9));
+if(!qp.get('pid')) lsSet('fm_pid',PID);
+const SESS = 'fm_room_'+PID;
+let CODE=null, ROOMREF=null, ROOMCB=null, PL={}, ME=null;
+let UI={tab:'q', asked:{}, sel:null, sex:lsGet('fm_sex')||'', err:''};
+
+const ready = p => !!p && typeof p.ans==='string' && /^[0-3]{8}$/.test(p.ans);
+const rv = ch => ch==='g'?1:(ch==='r'?-1:0);
+function ratingAt(t,o){ return (ME.ideal||'y'.repeat(32)).charAt(t*4+o)||'y'; }
+function pointsOf(c){ if(!ready(c)) return 0; let s=0; for(let t=0;t<NT;t++) s+=rv(ratingAt(t,+c.ans.charAt(t))); return s; }
+function labelOf(p){ return p>=6?'Dream flatmate!':(p>=3?'Good flatmate':(p>=0?'Maybe':'Different style')); }
+const sgn = n => n>0?'pos':(n<0?'neg':'zero');
+const fmt = n => (n>0?'+':'')+n;
+const cand = r => { const id=ME&&ME['c'+r]; return id&&PL[id]?PL[id]:null; };
+function saveMe(patch){
+  Object.keys(patch).forEach(k=>{ ME[k]=patch[k]; });
+  PL[PID]=ME;
+  if(ROOMREF) ROOMREF.child('p/'+PID).update(patch).catch(e=>console.error(e));
+}
+function setAt(str,i,ch){ return str.substring(0,i)+ch+str.substring(i+1); }
+
+/* ============ SHEET LOG ============ */
+function postSheet(data){
+  try{
+    const ifr=document.createElement('iframe'); ifr.name='lg'+Date.now(); ifr.style.display='none';
+    const f=document.createElement('form'); f.method='POST'; f.action=SHEET_URL; f.target=ifr.name; f.style.display='none';
+    const i=document.createElement('input'); i.type='hidden'; i.name='payload'; i.value=JSON.stringify(data); f.appendChild(i);
+    document.body.appendChild(ifr); document.body.appendChild(f); f.submit();
+    setTimeout(()=>{ ifr.remove(); f.remove(); },20000);
+  }catch(e){ console.error('log failed',e); }
+}
+function logResult(){
+  if(!SHEET_URL||!ME||ME.ph!=='final') return;
+  const k='fm_logged_'+CODE+'_'+PID; if(lsGet(k)) return; lsSet(k,'1');
+  const list=[1,2,3].map(r=>({r,c:cand(r)})).filter(x=>x.c).map(x=>({name:x.c.name,pts:pointsOf(x.c)}));
+  const best=list.slice().sort((a,b)=>b.pts-a.pts)[0];
+  const avg=list.length?Math.round(10*list.reduce((s,x)=>s+x.pts,0)/list.length)/10:0;
+  postSheet({game:'Flatmate', ts:new Date().toISOString(), room:CODE, name:ME.name||'', studentNumber:ME.num||'',
+    survey:ME.ans||'', interviews:list.map(x=>x.name+' ('+x.pts+')').join(', '), avgScore:avg, bestName:best?best.name:'', bestScore:best?best.pts:''});
+}
+
+/* ============ JOIN / ENTER ============ */
+function homeErr(m){ UI.err=m||''; const e=$('#err'); if(e) e.textContent=UI.err; }
+async function joinClass(){
+  if(!FB_OK){ homeErr('No connection. Check your internet.'); return; }
+  const name=($('#inName').value||'').trim().replace(/\s+/g,' ');
+  const code=($('#inCode').value||'').trim().toUpperCase();
+  const num=$('#inNum')?($('#inNum').value||'').trim():'';
+  if(!name){ homeErr('Type your name.'); return; }
+  if(!UI.sex){ homeErr('Choose she or he.'); return; }
+  if($('#inNum')&&!num){ homeErr('Type your student number.'); return; }
+  if(code.length!==4){ homeErr('Type the 4-letter class code.'); return; }
+  $('#goBtn').disabled=true;
+  try{
+    const sn=await db.ref(ROOT+'/'+code).once('value');
+    const v=sn.val();
+    if(!v||!v.created){ homeErr('There is no class with this code.'); $('#goBtn').disabled=false; return; }
+    const players=v.p||{};
+    const taken=Object.keys(players).some(k=>k!==PID&&String(players[k].name||'').toLowerCase()===name.toLowerCase());
+    if(taken){ homeErr('This name is used. Add a letter (for example: Aiko K).'); $('#goBtn').disabled=false; return; }
+    lsSet('fm_name',name); lsSet('fm_sex',UI.sex); if(num) lsSet('fm_num',num);
+    if(!players[PID]){
+      const me0={name, sex:UI.sex, num:num, ideal:'y'.repeat(32), ans:'--------', ph:'ideal', ti:0, rd:1, step:'intro', ts:TS()};
+      await db.ref(ROOT+'/'+code+'/p/'+PID).set(me0);
+    }
+    enterClass(code);
+  }catch(e){ console.error(e); homeErr('Could not join. Try again.'); $('#goBtn').disabled=false; }
+}
+function leaveSub(){ if(ROOMREF&&ROOMCB){ ROOMREF.off('value',ROOMCB); } ROOMREF=null; ROOMCB=null; }
+function enterClass(code){
+  leaveSub(); CODE=code; lsSet(SESS,code); ROOMREF=db.ref(ROOT+'/'+code); let first=true;
+  ROOMCB=ROOMREF.on('value',sn=>{
+    const v=sn.val();
+    if(!v||!v.created){ goHome('This class was closed.'); return; }
+    PL=v.p||{};
+    if(first){ first=false; ME=PL[PID]; if(!ME){ goHome('Please join again.'); return; } ME.sex=ME.sex||'f'; render(); return; }
+    if(PL[PID]) PL[PID]=ME; else { PL[PID]=ME; }
+    onPlayers();
+  });
+}
+function goHome(msg){ leaveSub(); lsDel(SESS); CODE=null; ME=null; PL={}; closeModal(); renderHome(msg||''); window.scrollTo(0,0); }
+async function resumeSaved(){
+  const code=lsGet(SESS); if(!code||!FB_OK) return false;
+  try{ const sn=await db.ref(ROOT+'/'+code).once('value'); const v=sn.val(); if(v&&v.created&&v.p&&v.p[PID]){ enterClass(code); return true; } lsDel(SESS); }catch(e){}
+  return false;
+}
+function onPlayers(){
+  if(!ME) return;
+  if(ME.ph==='round'&&ME.step==='pick') updatePickList();
+}
+
+/* ============ SCREENS ============ */
+function topBar(){
+  const stages=['ideal','about','r1','r2','r3'];
+  let cur=ME.ph==='ideal'?0:ME.ph==='about'?1:ME.ph==='round'?1+ME.rd:5;
+  const pips=stages.map((_,i)=>`<i class="${i<cur?'done':(i===cur?'cur':'')}"></i>`).join('');
+  return `<div class="top"><div class="pips">${pips}</div><span class="chip">${esc(ME.name)}</span></div>`;
+}
+function renderHome(msg){
+  const saved=lsGet(SESS);
+  const num=SHEET_URL?`<div><label>STUDENT NUMBER</label><input id="inNum" type="tel" inputmode="numeric" maxlength="12" value="${esc(lsGet('fm_num')||'')}" autocomplete="off"></div>`:'';
+  const code=(qp.get('c')||'').toUpperCase().slice(0,4);
+  app.innerHTML=`
+  <div class="hero"><div class="em">🏠</div><h1 class="logo" style="font-size:46px">Flatmate Finder</h1><p class="sub center">Find your best flatmate. Meet three people.</p></div>
+  ${saved?`<div class="panel"><p class="sub">You have a class open.</p><button class="btn gold" data-act="resume">Back to my class</button><button class="btn ghost" data-act="forget">Start new</button></div>`:''}
+  <div class="panel">
+    <div><label>YOUR NAME</label><input id="inName" type="text" maxlength="14" value="${esc(lsGet('fm_name')||'')}" autocomplete="off"></div>
+    <div><label>I AM…</label><div class="seg" id="sexSeg"><button data-act="sex" data-v="f" class="${UI.sex==='f'?'on':''}">She</button><button data-act="sex" data-v="m" class="${UI.sex==='m'?'on':''}">He</button></div></div>
+    ${num}
+    <div><label>CLASS CODE</label><input id="inCode" type="text" maxlength="4" value="${esc(code)}" autocomplete="off" autocapitalize="characters" style="text-transform:uppercase;letter-spacing:8px;text-align:center"></div>
+    <p class="err" id="err">${esc(msg||UI.err||'')}</p>
+    <button class="btn" id="goBtn" data-act="go">Join class</button>
+  </div>
+  <div class="panel steps">
+    <div><i>1</i><span>Choose what you want in a flatmate.</span></div>
+    <div><i>2</i><span>Answer questions about you.</span></div>
+    <div><i>3</i><span>Interview classmates and get points.</span></div>
+  </div>`;
+}
+function stageHead(label,right){ return `<div class="stage"><b>${label}</b><span>${right||''}</span></div>`; }
+
+function renderIdea(){
+  const t=ME.ti, T=TOP[t];
+  const opts=T.o.map((O,o)=>{
+    const r=ratingAt(t,o);
+    return `<div class="opt"><div class="ol">${esc(O.lab)}</div><div class="rt">
+      <button class="g ${r==='g'?'on':''}" data-act="rate" data-o="${o}" data-v="g"><span>🟢</span>Ideal</button>
+      <button class="y ${r==='y'?'on':''}" data-act="rate" data-o="${o}" data-v="y"><span>🟡</span>Don’t care</button>
+      <button class="r ${r==='r'?'on':''}" data-act="rate" data-o="${o}" data-v="r"><span>🔴</span>No way!</button></div></div>`;
+  }).join('');
+  app.innerHTML=`${topBar()}${stageHead('YOUR IDEAL FLATMATE',`Topic ${t+1} of ${NT}`)}
+  <div class="tcard"><div class="ic">${T.ic}</div><div><small>${T.lab.toUpperCase()}</small><div class="qq">${quesS(t,'your ideal flatmate','does',1)}</div></div></div>
+  <p class="sub">Tap one button for each answer.</p>
+  ${opts}
+  <div class="row">${t>0?'<button class="btn ghost" data-act="back">Back</button>':''}<button class="btn" data-act="nextIdeal">${t<NT-1?'Next':'Next: about you'}</button></div>`;
+}
+function renderAbout(){
+  const t=ME.ti, T=TOP[t], cur=ME.ans.charAt(t), chosen=/[0-3]/.test(cur)?+cur:-1;
+  const opts=T.o.map((O,o)=>`<button class="ch ${chosen===o?'on':''}" data-act="pick" data-o="${o}">${esc(O.lab)}</button>`).join('');
+  app.innerHTML=`${topBar()}${stageHead('ABOUT YOU',`Topic ${t+1} of ${NT}`)}
+  <div class="tcard"><div class="ic">${T.ic}</div><div><small>${T.lab.toUpperCase()}</small><div class="qq">${quesS(t,'you','do',1)}</div></div></div>
+  <div class="choices">${opts}</div>
+  <div class="row"><button class="btn ghost" data-act="back">Back</button><button class="btn" data-act="nextAbout" ${chosen<0?'disabled':''}>${t<NT-1?'Next':'Start Round 1'}</button></div>`;
+}
+const RINFO = {
+  1:{title:'Round 1 · Meet a flatmate', badge:'You · I', steps:['Find a partner.','Choose their name.','Take turns. Ask and answer all 8 questions.','Tap Done to see your points.']},
+  2:{title:'Round 2 · Meet a new flatmate', badge:'You · I', steps:['Find a new partner.','Choose their name.','Ask and answer again. You get less help.','Tap Done to see your points.']},
+  3:{title:'Round 3 · Talk about your first partner', badge:'He / She', steps:['Stay with your Round 2 partner.','Ask: “Who was your first partner?” Choose the name.','Ask about that person: “Does he / she…?”','Answer about your first partner. Use the Answers tab.','Tap Done to see your points.']}
+};
+function renderIntro(){
+  const r=ME.rd, I=RINFO[r], lv=LVR[r], c1=cand(1);
+  const steps=I.steps.map((s,i)=>`<div><i>${i+1}</i><span>${esc(s)}</span></div>`).join('');
+  app.innerHTML=`${topBar()}${stageHead(`ROUND ${r} OF 3`,`<span class="badge">${I.badge}</span>`)}
+  <h2 class="logo" style="font-size:32px;text-align:left;background:none;color:var(--gold);-webkit-text-fill-color:var(--gold)">${esc(I.title)}</h2>
+  <div class="panel steps">${steps}</div>
+  ${r===3?`<div class="who"><small>YOUR FIRST PARTNER</small><b>${c1?esc(c1.name):'—'}</b><span class="sub">Tell your partner about ${c1?esc(c1.name):'this person'}.</span></div>`:''}
+  <div class="who"><small>HELP LEVEL</small><b>${LVINFO[lv].name}</b><span class="sub">${LVINFO[lv].how}</span></div>
+  <button class="btn" data-act="startRound">${r===1?'Find a partner':'Start'}</button>`;
+}
+function pickRows(){
+  const met=[ME.c1,ME.c2,ME.c3].filter(Boolean);
+  const ids=Object.keys(PL).filter(k=>k!==PID).sort((a,b)=>String(PL[a].name).localeCompare(String(PL[b].name)));
+  if(!ids.length) return '<p class="sub center">Nobody else is here yet.</p>';
+  return ids.map(k=>{
+    const p=PL[k], ok=ready(p), isMet=met.indexOf(k)>=0;
+    return `<button class="prow ${UI.sel===k?'sel':''} ${ok?'':'off'}" data-act="selp" data-id="${esc(k)}" ${ok?'':'disabled'}>${esc(p.name)}${!ok?'<small>still answering</small>':(isMet?'<small>you met</small>':'')}</button>`;
+  }).join('');
+}
+function updatePickList(){
+  const box=$('#plist'); if(!box) return;
+  box.innerHTML=pickRows(); applyFilter();
+}
+function applyFilter(){
+  const q=(($('#psearch')||{}).value||'').trim().toLowerCase();
+  document.querySelectorAll('#plist .prow').forEach(b=>{ const n=b.textContent.toLowerCase(); b.style.display=(!q||n.indexOf(q)>=0)?'':'none'; });
+}
+function renderPick(){
+  const r=ME.rd;
+  const hint = r===3
+    ? `<div class="frame">Ask your partner:<br><b>“Who was your first partner?”</b><br>They say: “My first partner was ${BL}.”<br>Choose that name below.</div>`
+    : `<p class="sub">Choose the name of the person you are interviewing.</p>`;
+  UI.sel=null;
+  app.innerHTML=`${topBar()}${stageHead(`ROUND ${r} OF 3`,'Choose a name')}
+  ${hint}
+  <input id="psearch" type="text" placeholder="Search name" autocomplete="off">
+  <div class="plist" id="plist">${pickRows()}</div>
+  <button class="btn" id="pickOk" data-act="pickOk" disabled>Choose a name</button>`;
+}
+function whoLine(){
+  const r=ME.rd, c=cand(r);
+  if(r===3){ const c1=cand(1); return `<div class="who"><small>ROUND 3 · TALK ABOUT</small><b>${c?esc(c.name):'—'}</b><span class="sub">Questions: about ${c?esc(c.name):'…'} · Answers: about ${c1?esc(c1.name):'your first partner'}</span></div>`; }
+  return `<div class="who"><small>ROUND ${r} · INTERVIEW</small><b>${c?esc(c.name):'—'}</b></div>`;
+}
+function renderTalk(){
+  const r=ME.rd, lv=LVR[r], c=cand(r), c1=cand(1);
+  const key='r'+r; UI.asked[key]=UI.asked[key]||{};
+  const qWho = r===3 ? person(c?c.sex:'f',3) : {q:'you',d:'do'};
+  let body='';
+  if(UI.tab==='q'){
+    body=TOP.map((T,t)=>{
+      const done=UI.asked[key][t];
+      return `<button class="qr ${done?'done':''}" data-act="tick" data-t="${t}"><span class="ic">${T.ic}</span><div><small>${T.lab.toUpperCase()}</small><div class="qs">${quesS(t,qWho.q,qWho.d,lv)}</div></div><span class="tick">${done?'✓':''}</span></button>`;
+    }).join('');
+  } else {
+    let P, src;
+    if(r===3){ src=c1; P=person(c1?c1.sex:'f',3); } else { src=ME; P=person(ME.sex,1); }
+    if(!src||!ready(src)){ body='<p class="sub">No answers found for your first partner. Make up your answers.</p>'; }
+    else body=TOP.map((T,t)=>`<div class="qr" style="cursor:default"><span class="ic">${T.ic}</span><div><small>${T.lab.toUpperCase()}</small><div class="qs">${ansS(t,+src.ans.charAt(t),P,lv)}</div></div></div>`).join('');
+  }
+  const n=Object.keys(UI.asked[key]).filter(k=>UI.asked[key][k]).length;
+  app.innerHTML=`${topBar()}${stageHead(`ROUND ${r} OF 3`,`<span class="badge">${LVINFO[lv].name}</span>`)}
+  ${whoLine()}
+  <div class="tabs" id="tabs"><button data-act="tab" data-v="q" class="${UI.tab==='q'?'on':''}">Questions</button><button data-act="tab" data-v="a" class="${UI.tab==='a'?'on':''}">Answers</button></div>
+  <p class="sub">${UI.tab==='q'?'Ask these questions. Tap a question when you ask it.':(r===3?'Say these sentences about your first partner.':'Say these sentences about you.')}</p>
+  <div class="plist">${body}</div>
+  <div class="row"><button class="btn ghost" data-act="changeName">Change name</button><button class="btn gold" data-act="done">Done${n?` (${n}/${NT})`:''}</button></div>`;
+}
+function renderResult(){
+  const r=ME.rd, c=cand(r);
+  if(!c||!ready(c)){ app.innerHTML=`${topBar()}<p class="sub">We cannot find this person’s answers.</p><button class="btn" data-act="changeName">Choose a name</button>`; return; }
+  const pts=pointsOf(c), P=person(c.sex,3);
+  const rows=TOP.map((T,t)=>{
+    const o=+c.ans.charAt(t), rt=ratingAt(t,o), v=rv(rt);
+    return `<div class="rw"><span class="ic">${T.ic}</span><div><small>${T.lab.toUpperCase()}</small><div class="v">${esc(T.o[o].lab)}</div></div><span class="pt ${rt}">${fmt(v)}</span></div>`;
+  }).join('');
+  app.innerHTML=`${topBar()}${stageHead(`ROUND ${r} OF 3`,'Your points')}
+  <div class="who"><small>CANDIDATE</small><b>${esc(c.name)}</b></div>
+  <div class="big ${sgn(pts)}">${fmt(pts)}</div>
+  <div class="banner ${pts>=6?'top':''}">${labelOf(pts)}</div>
+  <div class="plist">${rows}</div>
+  <p class="sub center">${P.S==='She'?'She':'He'} is in your table now.</p>
+  <button class="btn" data-act="nextRound">${r<3?'Next round':'See my table'}</button>`;
+}
+function renderFinal(){
+  logResult();
+  const list=[1,2,3].map(r=>({r,c:cand(r)})).filter(x=>x.c&&ready(x.c)).map(x=>({r:x.r,c:x.c,pts:pointsOf(x.c)}));
+  let best=null; list.forEach(x=>{ if(!best||x.pts>best.pts) best=x; });
+  const cards=list.map(x=>{
+    const dots=TOP.map((T,t)=>{ const rt=ratingAt(t,+x.c.ans.charAt(t)); return `<span class="${rt}" title="${T.lab}">${T.ic}</span>`; }).join('');
+    return `<div class="cc ${best&&x===best?'best':''}"><div class="hd"><b>${esc(x.c.name)}</b>${best&&x===best?'<span class="tagb">BEST</span>':''}<span class="sc ${sgn(x.pts)}">${fmt(x.pts)}</span></div><div class="dots">${dots}</div><span class="sub" style="font-size:14px">Round ${x.r} · ${labelOf(x.pts)}</span></div>`;
+  }).join('');
+  let say='';
+  if(best){
+    const P=person(best.c.sex,3);
+    const good=[], bad=[];
+    TOP.forEach((T,t)=>{ const o=+best.c.ans.charAt(t), rt=ratingAt(t,o); const s=ansS(t,o,P,1); if(rt==='g') good.push(s); else if(rt==='r') bad.push(s); });
+    say=`<div class="panel"><h3 class="logo" style="font-size:24px;text-align:left;background:none;color:var(--gold);-webkit-text-fill-color:var(--gold)">My best flatmate is ${esc(best.c.name)}.</h3>
+      ${good.length?`<div class="say">${good.slice(0,4).map(s=>`<div>${s}</div>`).join('')}</div>`:'<p class="sub">No green topics. Which things are OK?</p>'}
+      ${bad.length?`<p class="sub">But…</p><div class="say">${bad.slice(0,2).map(s=>`<div class="no">${s}</div>`).join('')}</div>`:''}</div>`;
+  }
+  app.innerHTML=`${topBar()}
+  <div class="hero"><div class="em">🏠</div><h2 class="logo" style="font-size:36px">My flatmate table</h2></div>
+  <div class="legend"><span>🟢 ideal</span><span>🟡 don’t care</span><span>🔴 no way!</span></div>
+  ${cards||'<p class="sub center">You have no candidates yet.</p>'}
+  ${say}
+  <div class="panel"><b style="color:var(--gold)">Round 4 (with the slides)</b><p class="sub">Find a new partner. Tell your partner about your best flatmate. Use <b style="color:var(--ink)">he</b> or <b style="color:var(--ink)">she</b>.</p></div>
+  <button class="btn ghost" data-act="back2">Back to Round 3</button>
+  <button class="btn ghost" data-act="leave">Leave class</button>`;
+}
+function render(){
+  if(!ME){ renderHome(''); return; }
+  if(ME.ph==='ideal') renderIdea();
+  else if(ME.ph==='about') renderAbout();
+  else if(ME.ph==='round'){
+    const s=ME.step;
+    if(s==='intro') renderIntro(); else if(s==='pick') renderPick(); else if(s==='talk') renderTalk(); else renderResult();
+  } else renderFinal();
+  const pb=$('#psearch'); if(pb) pb.addEventListener('input',applyFilter);
+}
+
+/* ============ TEACHER ============ */
+function stageLabel(p){
+  if(p.ph==='ideal') return 'Ideal flatmate '+((p.ti||0)+1)+'/8';
+  if(p.ph==='about') return 'About me '+((p.ti||0)+1)+'/8';
+  if(p.ph==='round'){ const m={intro:'start',pick:'choosing a name',talk:'interview',result:'points'}; return 'Round '+p.rd+' · '+(m[p.step]||''); }
+  return '✅ Done';
+}
+let TCODE=null, TREF=null, TCB=null, TDATA=null;
+function tCode(){ const L='ABCDEFGHJKLMNPQRSTUVWXYZ'; let s=''; for(let i=0;i<4;i++) s+=L[Math.floor(Math.random()*L.length)]; return s; }
+async function tCreate(){
+  if(!FB_OK) return;
+  for(let i=0;i<10;i++){
+    const c=tCode(); const sn=await db.ref(ROOT+'/'+c).once('value');
+    if(!sn.exists()){ await db.ref(ROOT+'/'+c+'/created').set(TS()); lsSet('fm_tcode',c); tWatch(c); return; }
+  }
+}
+function tWatch(code){
+  if(TREF&&TCB) TREF.off('value',TCB);
+  TCODE=code; TREF=db.ref(ROOT+'/'+code); TCB=TREF.on('value',sn=>{ TDATA=sn.val(); renderTeacher(); });
+}
+function renderTeacher(){
+  if(!TCODE){ const c=lsGet('fm_tcode'); if(c&&FB_OK){ tWatch(c); } }
+  if(!TCODE||!TDATA||!TDATA.created){
+    app.innerHTML=`<div class="hero"><div class="em">👩‍🏫</div><h1 class="logo" style="font-size:38px">Teacher</h1></div>
+    <div class="panel"><p class="sub">Make a class code. Students type it to join.</p><button class="btn" data-act="tNew">New class</button>
+    <div><label>OR OPEN A CLASS CODE</label><input id="tIn" type="text" maxlength="4" autocapitalize="characters" style="text-transform:uppercase;letter-spacing:8px;text-align:center"></div>
+    <button class="btn ghost" data-act="tOpen">Open</button></div>`;
+    return;
+  }
+  const p=TDATA.p||{}; const ids=Object.keys(p).sort((a,b)=>String(p[a].name).localeCompare(String(p[b].name)));
+  const done=ids.filter(k=>p[k].ph==='final').length;
+  const link=location.origin&&location.origin!=='null'?location.href.split('#')[0].split('?')[0]+'?c='+TCODE:'';
+  const rows=ids.map(k=>{ const q=p[k]; const cs=[1,2,3].map(r=>q['c'+r]&&p[q['c'+r]]?p[q['c'+r]].name:'').filter(Boolean).join(', ');
+    return `<tr><td>${esc(q.name)}</td><td>${esc(stageLabel(q))}</td><td>${esc(cs)}</td></tr>`; }).join('');
+  app.innerHTML=`<div class="hero"><h1 class="logo" style="font-size:34px">Class code</h1></div>
+  <div class="code">${esc(TCODE)}</div>
+  ${link?`<p class="sub center" style="word-break:break-all">${esc(link)}</p>`:''}
+  <div class="panel"><p class="sub center"><b style="color:var(--gold)">${ids.length}</b> students joined · <b style="color:var(--teal)">${done}</b> finished</p></div>
+  <div class="tr"><h3>Students</h3><table><tr><th>Name</th><th>Where</th><th>Candidates</th></tr>${rows||'<tr><td colspan="3">Nobody yet.</td></tr>'}</table></div>
+  <button class="btn red" data-act="tDelAsk">Delete this class</button>
+  <button class="btn ghost" data-act="tClose">New class code</button>`;
+}
+
+/* ============ MODAL ============ */
+function showModal(html){
+  closeModal(); const m=document.createElement('div'); m.id='modal'; m.innerHTML=`<div class="box">${html}</div>`; document.body.appendChild(m);
+}
+function closeModal(){ const m=$('#modal'); if(m) m.remove(); }
+
+/* ============ EVENTS ============ */
+document.addEventListener('click', e=>{
+  const b=e.target.closest('[data-act]'); if(b) onAct(b);
+});
+function keepScroll(fn){ const y=window.scrollY; fn(); window.scrollTo(0,y); }
+function onAct(b){
+  const a=b.dataset.act;
+  if(a==='sex'){ UI.sex=b.dataset.v; document.querySelectorAll('#sexSeg button').forEach(x=>x.classList.toggle('on',x===b)); return; }
+  if(a==='go'){ joinClass(); return; }
+  if(a==='resume'){ resumeSaved().then(ok=>{ if(!ok) renderHome('That class is not there any more.'); }); return; }
+  if(a==='forget'){ lsDel(SESS); renderHome(''); return; }
+  if(a==='leave'){ goHome(''); return; }
+  if(a==='rate'){ const o=+b.dataset.o; const i=ME.ti*4+o; saveMe({ideal:setAt(ME.ideal,i,b.dataset.v)}); keepScroll(render); return; }
+  if(a==='back'){
+    if(ME.ph==='ideal'&&ME.ti>0) saveMe({ti:ME.ti-1});
+    else if(ME.ph==='about'){ if(ME.ti>0) saveMe({ti:ME.ti-1}); else saveMe({ph:'ideal',ti:NT-1}); }
+    render(); window.scrollTo(0,0); return;
+  }
+  if(a==='nextIdeal'){ if(ME.ti<NT-1) saveMe({ti:ME.ti+1}); else saveMe({ph:'about',ti:0}); render(); window.scrollTo(0,0); return; }
+  if(a==='pick'){ const t=ME.ti; saveMe({ans:setAt(ME.ans,t,String(+b.dataset.o))}); keepScroll(render); return; }
+  if(a==='nextAbout'){ if(ME.ti<NT-1) saveMe({ti:ME.ti+1}); else saveMe({ph:'round',rd:1,step:'intro',ti:0}); render(); window.scrollTo(0,0); return; }
+  if(a==='startRound'){ saveMe({step:'pick'}); render(); window.scrollTo(0,0); return; }
+  if(a==='selp'){ UI.sel=b.dataset.id; document.querySelectorAll('#plist .prow').forEach(x=>x.classList.toggle('sel',x===b)); const ok=$('#pickOk'); if(ok){ ok.disabled=false; ok.textContent='Choose '+(PL[UI.sel]?PL[UI.sel].name:''); } return; }
+  if(a==='pickOk'){ if(!UI.sel) return; const patch={step:'talk'}; patch['c'+ME.rd]=UI.sel; UI.tab='q'; saveMe(patch); render(); window.scrollTo(0,0); return; }
+  if(a==='tab'){ UI.tab=b.dataset.v; keepScroll(render); return; }
+  if(a==='tick'){ const key='r'+ME.rd; UI.asked[key]=UI.asked[key]||{}; const t=b.dataset.t; UI.asked[key][t]=!UI.asked[key][t]; keepScroll(render); return; }
+  if(a==='changeName'){ saveMe({step:'pick'}); render(); window.scrollTo(0,0); return; }
+  if(a==='done'){ saveMe({step:'result'}); render(); window.scrollTo(0,0); return; }
+  if(a==='nextRound'){ if(ME.rd<3){ UI.tab='q'; saveMe({rd:ME.rd+1,step:'intro'}); } else saveMe({ph:'final'}); render(); window.scrollTo(0,0); return; }
+  if(a==='back2'){ saveMe({ph:'round',rd:3,step:'result'}); render(); window.scrollTo(0,0); return; }
+  if(a==='tNew'){ tCreate(); return; }
+  if(a==='tOpen'){ const c=(($('#tIn')||{}).value||'').trim().toUpperCase(); if(c.length===4){ lsSet('fm_tcode',c); tWatch(c); } return; }
+  if(a==='tClose'){ lsDel('fm_tcode'); if(TREF&&TCB) TREF.off('value',TCB); TCODE=null; TDATA=null; renderTeacher(); return; }
+  if(a==='tDelAsk'){ showModal(`<h3>Delete this class?</h3><p class="sub">All answers and tables will be removed. This cannot be undone.</p><button class="btn red" data-act="tDel">Delete</button><button class="btn ghost" data-act="mClose">Cancel</button>`); return; }
+  if(a==='tDel'){ closeModal(); if(TREF) TREF.remove().then(()=>{ lsDel('fm_tcode'); TCODE=null; TDATA=null; renderTeacher(); }); return; }
+  if(a==='mClose'){ closeModal(); return; }
+}
+
+/* ============ START ============ */
+async function boot(){
+  if(location.hash==='#teacher'){ renderTeacher(); return; }
+  renderHome('');
+  if(lsGet(SESS)&&FB_OK){ const ok=await resumeSaved(); if(!ok) renderHome(''); }
+}
+boot();
+window.addEventListener('hashchange',()=>{ location.reload(); });
+
+</script>
+</body>
+</html>
