@@ -185,7 +185,6 @@ const SR2 = (r,N) => prevIn(ringOf(N,'r2',r),r);              // story I build i
 const told3 = (r,N) => N===2 ? (r==='A'?'C':'D') : SR2(r,N);  // story I tell in Round 3 (2 players: a new story, C or D)
 const SR3 = (r,N) => told3(prevIn(ringOf(N,'r3',r),r),N);     // story I build in Round 3
 const lastLock = N => 'r3l';
-const tableMax = N => RINGS[N].r1.length*12 + 10*N;
 const SEATING = {2:'A, B',3:'A, B, C',4:'A, B, D, C'};
 const ORD = ['lobby','r1','r2i','r2','r3i','r3','rev'];
 
@@ -203,8 +202,6 @@ const firebaseConfig = {
 let db=null, FB_OK=false;
 try{ firebase.initializeApp(firebaseConfig); db=firebase.database(); FB_OK=true; }catch(e){ console.error('Firebase init failed',e); }
 const ROOT='picture-tales';
-// Paste your Google Apps Script web app URL between the quotes to log results to a Google Sheet (leave empty to turn logging off).
-const SHEET_URL = '';
 const TS=()=>firebase.database.ServerValue.TIMESTAMP;
 
 /* ============ STATE ============ */
@@ -234,34 +231,7 @@ const groupHere = g => g.every(r=>seat(r));
 const groupStarted = (g,idx) => g.every(r=>r===ME.role || (seat(r) && ordI(seat(r))>=idx));
 const label = p => p ? (p.role+' ('+esc(p.name)+')') : '';
 
-/* ============ SCORING ============ */
-function pts1(seg){ const i=seg.indexOf('o'); return i<0?0:(i===0?2:(i===1?1:0)); }
-function p1(p){ const g=((p&&p.r1)||'').split('.'); let s=0; for(let k=0;k<6;k++) s+=pts1(g[k]||''); return s; }
-function matches(str){ let n=0; for(let i=0;i<5;i++) if((str||'').charAt(i)==='12345'.charAt(i)) n++; return n; }
-const p2 = p => p&&p.r2l===1 ? matches(p.r2) : 0;
-const p3 = p => p&&p.r3l===1 ? matches(p.r3) : 0;
-const pTot = p => p1(p)+p2(p)+p3(p);
 const tableP = n => Object.keys(PL).map(k=>PL[k]).filter(p=>p && +p.table===+n);
-function tableDone(n){ const t=tableP(n), N=tsize(n); return rolesOf(N).every(r=>t.some(p=>p.role===r && p.r2l===1 && p.r3l===1)); }
-const tableScore = n => tableP(n).reduce((s,p)=>s+pTot(p),0);
-
-/* ============ SHEET LOG ============ */
-function postSheet(data){
-  try{
-    const ifr=document.createElement('iframe'); ifr.name='lg'+Date.now(); ifr.style.display='none';
-    const f=document.createElement('form'); f.method='POST'; f.action=SHEET_URL; f.target=ifr.name; f.style.display='none';
-    const i=document.createElement('input'); i.type='hidden'; i.name='payload'; i.value=JSON.stringify(data); f.appendChild(i);
-    document.body.appendChild(ifr); document.body.appendChild(f); f.submit();
-    setTimeout(()=>{ ifr.remove(); f.remove(); },20000);
-  }catch(e){ console.error('log failed',e); }
-}
-function logResult(){
-  if(!SHEET_URL||!ME) return;
-  const k='pt_logged_'+CODE+'_'+PID; if(lsGet(k)) return; lsSet(k,'1');
-  postSheet({game:'PictureTales', ts:new Date().toISOString(), room:CODE, name:ME.name||'', studentNumber:ME.num||'',
-    table:ME.table, size:NS(), seat:ME.role, r1:p1(ME), r2:p2(ME), r3:p3(ME), total:pTot(ME), helps2:ME.h2||0, helps3:ME.h3||0,
-    tableScore:tableScore(ME.table)});
-}
 
 /* ============ SEEDED SHUFFLE ============ */
 function rng(seed){ let h=1779033703^seed.length; for(let i=0;i<seed.length;i++){ h=Math.imul(h^seed.charCodeAt(i),3432918353); h=h<<13|h>>>19; }
@@ -270,35 +240,46 @@ function shuf(arr,seed){ const a=arr.slice(), r=rng(seed); for(let i=a.length-1;
 
 /* ============ JOIN / ENTER ============ */
 function homeErr(m){ UI.err=m||''; const e=$('#err'); if(e) e.textContent=UI.err; }
+function newCode(){ const L='ABCDEFGHJKLMNPQRSTUVWXYZ'; let c=''; for(let i=0;i<4;i++) c+=L[Math.floor(Math.random()*L.length)]; return c; }
+async function startTable(){
+  if(!FB_OK){ homeErr('No connection. Check your internet.'); return; }
+  const name=($('#inName').value||'').trim().replace(/\s+/g,' ');
+  if(!name){ homeErr('Type your name.'); return; }
+  if(!UI.size){ homeErr('Choose how many players are at your table.'); return; }
+  $('#goBtn').disabled=true;
+  try{
+    let code=null;
+    for(let i=0;i<12;i++){ const c=newCode(); const sn=await db.ref(ROOT+'/'+c).once('value'); if(!sn.exists()){ code=c; break; } }
+    if(!code){ homeErr('Could not make a code. Try again.'); $('#goBtn').disabled=false; return; }
+    lsSet('pt_name',name); lsSet('pt_size',String(UI.size));
+    const me0={name, table:1, size:UI.size, role:'A', ph:'lobby', ts:TS()};
+    await db.ref(ROOT+'/'+code).set({created:TS(), size:UI.size, seat:{A:PID}, p:{[PID]:me0}});
+    enterClass(code);
+  }catch(e){ console.error(e); homeErr('Could not start. Try again.'); $('#goBtn').disabled=false; }
+}
 async function joinClass(){
   if(!FB_OK){ homeErr('No connection. Check your internet.'); return; }
   const name=($('#inName').value||'').trim().replace(/\s+/g,' ');
   const code=($('#inCode').value||'').trim().toUpperCase();
-  const table=parseInt($('#inTable').value,10);
-  const num=$('#inNum')?($('#inNum').value||'').trim():'';
   if(!name){ homeErr('Type your name.'); return; }
-  if($('#inNum')&&!num){ homeErr('Type your student number.'); return; }
-  if(code.length!==4){ homeErr('Type the 4-letter host code.'); return; }
-  if(!(table>=1&&table<=40)){ homeErr('Type your table number.'); return; }
-  if(!UI.size){ homeErr('Choose how many players are at your table.'); return; }
-  if(!UI.role||ALL.indexOf(UI.role)>=UI.size){ homeErr('Choose your letter.'); return; }
+  if(code.length!==4){ homeErr('Type the 4-letter table code.'); return; }
   $('#goBtn').disabled=true;
   try{
     const sn=await db.ref(ROOT+'/'+code).once('value');
     const v=sn.val();
-    if(!v||!v.created){ homeErr('There is no class with this code.'); $('#goBtn').disabled=false; return; }
-    const players=v.p||{};
-    const at=r=>Object.keys(players).find(k=>k!==PID && +players[k].table===table && players[k].role===r);
-    const other=Object.keys(players).find(k=>k!==PID && +players[k].table===table && players[k].size && +players[k].size!==UI.size);
-    if(other){ homeErr('Table '+table+' has '+players[other].size+' players. Choose '+players[other].size+'.'); $('#goBtn').disabled=false; return; }
-    if(at(UI.role)){
-      const free=rolesOf(UI.size).filter(r=>!at(r));
-      homeErr('Letter '+UI.role+' is taken at table '+table+'. Free: '+(free.join(', ')||'none')+'.');
-      $('#goBtn').disabled=false; return;
+    if(!v||!v.created){ homeErr('There is no table with this code.'); $('#goBtn').disabled=false; return; }
+    lsSet('pt_name',name);
+    const N=+v.size||4;
+    if(v.p&&v.p[PID]){ enterClass(code); return; }     // already in this table
+    let role=null;
+    for(const r of rolesOf(N)){
+      if(r==='A') continue;
+      let got=false;
+      await db.ref(ROOT+'/'+code+'/seat/'+r).transaction(cur=>cur?undefined:PID,(e,committed)=>{ got=!!committed; });
+      if(got){ role=r; break; }
     }
-    lsSet('pt_name',name); lsSet('pt_role',UI.role); lsSet('pt_size',String(UI.size)); lsSet('pt_table',String(table)); if(num) lsSet('pt_num',num);
-    const me0={name, num, table, size:UI.size, role:UI.role, ph:'lobby', ts:TS()};
-    await db.ref(ROOT+'/'+code+'/p/'+PID).set(me0);
+    if(!role){ homeErr('This table is full.'); $('#goBtn').disabled=false; return; }
+    await db.ref(ROOT+'/'+code+'/p/'+PID).set({name, table:1, size:N, role, ph:'lobby', ts:TS()});
     enterClass(code);
   }catch(e){ console.error(e); homeErr('Could not join. Try again.'); $('#goBtn').disabled=false; }
 }
@@ -307,7 +288,7 @@ function enterClass(code){
   leaveSub(); CODE=code; lsSet(SESS,code); ROOMREF=db.ref(ROOT+'/'+code); let first=true;
   ROOMCB=ROOMREF.on('value',sn=>{
     const v=sn.val();
-    if(!v||!v.created){ goHome('This class was closed.'); return; }
+    if(!v||!v.created){ goHome('This table was closed.'); return; }
     PL=v.p||{};
     if(first){ first=false; ME=PL[PID]; if(!ME){ goHome('Please join again.'); return; } UI.sig=sigNow(); render(); return; }
     if(!ME){ return; }
@@ -338,7 +319,7 @@ function onPlayers(){
 function topBar(){
   const idx={lobby:0,r1:0,r2i:1,r2:1,r3i:2,r3:2,rev:3}[ME.ph];
   const pips=[0,1,2,3].map(i=>`<i class="${i<idx?'done':(i===idx?'cur':'')}"></i>`).join('');
-  return `<div class="top"><div class="pips">${pips}</div><span class="chip" style="--rc:${RC[ME.role]}"><b>${ME.role}</b>${esc(ME.name)} · T${esc(ME.table)}</span></div>`;
+  return `<div class="top"><div class="pips">${pips}</div><span class="chip" style="--rc:${RC[ME.role]}"><b>${ME.role}</b>${esc(ME.name)}</span></div>`;
 }
 const stageHead = (a,b) => `<div class="stage"><b>${a}</b><span>${b||''}</span></div>`;
 function seatGrid(){
@@ -354,12 +335,12 @@ function renderHome(msg){
   const saved=lsGet(SESS);
   app.innerHTML=`
   <div class="hero"><div class="em">🖼️</div><h1 class="logo" style="font-size:50px">Picture Tales</h1><p class="sub center">Funny stories. Tell them. Build them.</p></div>
-  ${saved?`<div class="card"><p class="sub">You have a class open.</p><button class="btn gold" data-act="resume">Back to my class</button><button class="btn ghost" data-act="forget">Start new</button></div>`:''}
+  ${saved?`<div class="card"><p class="sub">You have a game open.</p><button class="btn gold" data-act="resume">Back to my table</button><button class="btn ghost" data-act="forget">Start new</button></div>`:''}
   <div class="card">
     ${msg?`<p class="err">${esc(msg)}</p>`:''}
-    <button class="btn" data-act="joinGo">Join a class</button>
-    <button class="btn gold" data-act="hostGo">Host a class</button>
-    <p class="sub center">Students: tap Join. Teacher: tap Host.</p>
+    <button class="btn gold" data-act="startGo">Start a table</button>
+    <button class="btn" data-act="joinGo">Join a table</button>
+    <p class="sub center">One student starts the table and is player A. The other students join.</p>
   </div>
   <div class="card steps">
     <div><i>1</i><span>Build a story with your partner.</span></div>
@@ -367,23 +348,30 @@ function renderHome(msg){
     <div><i>3</i><span>Pass it on. How did it change?</span></div>
   </div>`;
 }
-function roleSegHtml(){ return rolesOf(UI.size||4).map(r=>`<button data-act="role" data-v="${r}" style="--rc:${RC[r]}" class="${UI.role===r?'on':''}">${r}</button>`).join(''); }
-function seatHint(){ return UI.size?'Sit around the table in this order: '+SEATING[UI.size]+'.':'Choose your table size first.'; }
+function sizeSegHtml(){ return [2,3,4].map(n=>`<button data-act="size" data-v="${n}" class="${UI.size===n?'on':''}">${n}</button>`).join(''); }
+function renderStart(msg){
+  UI.view='start';
+  app.innerHTML=`
+  <div class="hero"><div class="em">🙋</div><h1 class="logo" style="font-size:42px">Start a table</h1></div>
+  <div class="card">
+    <p class="sub">You are player <b style="color:var(--ink)">A</b>. Your table-mates will type your table code.</p>
+    <div><label>YOUR NAME</label><input id="inName" type="text" maxlength="14" value="${esc(lsGet('pt_name')||'')}" autocomplete="off"></div>
+    <div><label>HOW MANY PLAYERS AT YOUR TABLE?</label><div class="seg" id="sizeSeg">${sizeSegHtml()}</div>
+    <p class="sub" id="seatHint" style="margin-top:8px;font-size:17px">${UI.size?'Sit around the table in this order: '+SEATING[UI.size]+'.':''}</p></div>
+    <p class="err" id="err">${esc(msg||UI.err||'')}</p>
+    <button class="btn" id="goBtn" data-act="goStart">Make my table</button>
+    <button class="btn ghost" data-act="homeBack">Back</button>
+  </div>`;
+}
 function renderJoin(msg){
   UI.view='join';
-  const num=SHEET_URL?`<div><label>STUDENT NUMBER</label><input id="inNum" type="tel" inputmode="numeric" maxlength="12" value="${esc(lsGet('pt_num')||'')}" autocomplete="off"></div>`:'';
   app.innerHTML=`
-  <div class="hero"><div class="em">🙋</div><h1 class="logo" style="font-size:42px">Join a class</h1></div>
+  <div class="hero"><div class="em">🙋</div><h1 class="logo" style="font-size:42px">Join a table</h1></div>
   <div class="card">
     <div><label>YOUR NAME</label><input id="inName" type="text" maxlength="14" value="${esc(lsGet('pt_name')||'')}" autocomplete="off"></div>
-    ${num}
-    <div><label>HOST CODE</label><input id="inCode" type="text" maxlength="4" autocomplete="off" autocapitalize="characters" style="text-transform:uppercase;letter-spacing:8px;text-align:center"></div>
-    <div><label>TABLE NUMBER</label><input id="inTable" type="tel" inputmode="numeric" maxlength="2" value="${esc(lsGet('pt_table')||'')}" autocomplete="off" style="text-align:center"></div>
-    <div><label>PLAYERS AT YOUR TABLE</label><div class="seg" id="sizeSeg">${[2,3,4].map(n=>`<button data-act="size" data-v="${n}" class="${UI.size===n?'on':''}">${n}</button>`).join('')}</div></div>
-    <div><label>YOUR LETTER</label><div class="seg" id="roleSeg">${roleSegHtml()}</div>
-    <p class="sub" id="seatHint" style="margin-top:8px;font-size:17px">${seatHint()}</p></div>
+    <div><label>TABLE CODE (FROM PLAYER A)</label><input id="inCode" type="text" maxlength="4" autocomplete="off" autocapitalize="characters" style="text-transform:uppercase;letter-spacing:8px;text-align:center"></div>
     <p class="err" id="err">${esc(msg||UI.err||'')}</p>
-    <button class="btn" id="goBtn" data-act="go">Join class</button>
+    <button class="btn" id="goBtn" data-act="go">Join table</button>
     <button class="btn ghost" data-act="homeBack">Back</button>
   </div>`;
 }
@@ -394,7 +382,8 @@ function renderLobby(){
   const rule = 'You read scenes '+mine.join(', ')+'.';
   const missing=rolesOf(N).filter(r=>!seat(r));
   app.innerHTML=`${topBar()}
-  ${stageHead('TABLE '+esc(ME.table),'YOUR TABLE')}
+  ${stageHead('YOUR TABLE','')}
+  ${ready?'':`<div class="card center"><p class="sub">Table code</p><div class="code">${esc(CODE)}</div><p class="sub">${ME.role==='A'?'Tell your table-mates this code. They tap Join a table.':'Waiting for your table-mates…'}</p></div>`}
   ${seatGrid()}
   <div class="card">
     <h2 class="big">Round 1 · Build a comic</h2>
@@ -536,7 +525,6 @@ function renderReveal(){
     app.innerHTML=`${topBar()}${stageHead('REVEAL','')}${waitCard('Waiting for '+missing.join(', ')+' to finish Round 3…')}`;
     return;
   }
-  logResult();
   const by=r=>t.find(p=>p.role===r);
   const rows=(N===2?['A','B','C','D']:rolesOf(N)).map(sid=>{
     if(N===2 && 'CD'.includes(sid)){   // the two new stories of Round 3
@@ -575,53 +563,6 @@ function render(){
   else renderReveal();
 }
 
-/* ============ TEACHER ============ */
-let TCODE=null, TREF=null, TCB=null, TDATA=null;
-function tCode(){ const L='ABCDEFGHJKLMNPQRSTUVWXYZ'; let s=''; for(let i=0;i<4;i++) s+=L[Math.floor(Math.random()*L.length)]; return s; }
-async function tCreate(){
-  if(!FB_OK) return;
-  for(let i=0;i<10;i++){
-    const c=tCode(); const sn=await db.ref(ROOT+'/'+c).once('value');
-    if(!sn.exists()){ await db.ref(ROOT+'/'+c+'/created').set(TS()); lsSet('pt_tcode',c); tWatch(c); return; }
-  }
-}
-function tWatch(code){
-  if(TREF&&TCB) TREF.off('value',TCB);
-  TCODE=code; TREF=db.ref(ROOT+'/'+code); TCB=TREF.on('value',sn=>{ TDATA=sn.val(); if(UI.view==='teacher') renderTeacher(); });
-}
-function stageShort(p){ return p.ph==='lobby'?'waiting':p.ph==='r1'?'R1':(p.ph==='r2i'||p.ph==='r2')?'R2':(p.ph==='r3i'||p.ph==='r3')?'R3':'done'; }
-function renderTeacher(){
-  UI.view='teacher';
-  if(!TCODE){ const c=lsGet('pt_tcode'); if(c&&FB_OK){ tWatch(c); } }
-  if(!TCODE||!TDATA||!TDATA.created){
-    app.innerHTML=`<div class="hero"><div class="em">👩‍🏫</div><h1 class="logo" style="font-size:40px">Host a class</h1></div>
-    <div class="card"><p class="sub">Make a host code. Students type it to join.</p><button class="btn" data-act="tNew">Make a host code</button>
-    <div><label>OR OPEN AN OLD HOST CODE</label><input id="tIn" type="text" maxlength="4" autocapitalize="characters" style="text-transform:uppercase;letter-spacing:8px;text-align:center"></div>
-    <button class="btn ghost" data-act="tOpen">Open</button>
-    <button class="btn ghost" data-act="homeBack">Back</button></div>`;
-    return;
-  }
-  const p=TDATA.p||{}; const ids=Object.keys(p);
-  const old=PL; PL=p; // reuse scoring helpers on host data
-  const done=ids.filter(k=>p[k][lastLock(tsize(p[k].table))]===1).length;
-  const nums=[...new Set(ids.map(k=>+p[k].table))].sort((a,b)=>a-b);
-  const tables=nums.map(n=>{
-    const t=ids.map(k=>p[k]).filter(x=>+x.table===n);
-    const N=tsize(n), full=tableDone(n);
-    const cs=rolesOf(N).map(r=>{ const x=t.find(y=>y.role===r); return `<div style="--rc:${RC[r]}"><b>${r}</b>${x?esc(x.name):'—'} <small>${x?stageShort(x):''}</small></div>`; }).join('');
-    return `<div class="tb"><h4><span>Table ${n} · ${N}p</span><span>${full?'done':''}</span></h4><div class="cs">${cs}</div></div>`;
-  }).join('');
-  PL=old;
-  app.innerHTML=`<div class="hero"><h1 class="logo" style="font-size:36px">Host code</h1></div>
-  <div class="code">${esc(TCODE)}</div>
-  <p class="sub center">Write this code on the board. Students tap Join and type it.</p>
-  <div class="card"><p class="sub center"><b style="color:var(--ink)">${ids.length}</b> students · <b style="color:var(--ink)">${nums.length}</b> tables · <b style="color:var(--good)">${done}</b> finished</p></div>
-  <div class="tgrid">${tables||'<div class="card"><p class="sub">Nobody yet.</p></div>'}</div>
-  <button class="btn redo" data-act="tDelAsk">Delete this class</button>
-  <button class="btn ghost" data-act="tClose">Make a different host code</button>
-  <button class="btn ghost" data-act="homeBack">Back to home</button>`;
-}
-
 /* ============ MODAL ============ */
 function showModal(html){
   closeModal(); const m=document.createElement('div'); m.id='modal'; m.innerHTML=`<div class="box">${html}</div>`; document.body.appendChild(m);
@@ -636,15 +577,15 @@ function keepScroll(fn){ const y=window.scrollY; fn(); window.scrollTo(0,y); }
 function top0(){ window.scrollTo(0,0); }
 function onAct(b){
   const a=b.dataset.act;
-  if(a==='role'){ UI.role=b.dataset.v; document.querySelectorAll('#roleSeg button').forEach(x=>x.classList.toggle('on',x===b)); return; }
-  if(a==='size'){ UI.size=+b.dataset.v; if(UI.role&&ALL.indexOf(UI.role)>=UI.size) UI.role='';
+  if(a==='size'){ UI.size=+b.dataset.v;
     document.querySelectorAll('#sizeSeg button').forEach(x=>x.classList.toggle('on',x===b));
-    const rs=$('#roleSeg'); if(rs) rs.innerHTML=roleSegHtml(); const sh=$('#seatHint'); if(sh) sh.textContent=seatHint(); return; }
+    const sh=$('#seatHint'); if(sh) sh.textContent='Sit around the table in this order: '+SEATING[UI.size]+'.'; return; }
   if(a==='go'){ joinClass(); return; }
   if(a==='joinGo'){ renderJoin(''); top0(); return; }
-  if(a==='hostGo'){ renderTeacher(); top0(); return; }
+  if(a==='startGo'){ renderStart(''); top0(); return; }
+  if(a==='goStart'){ startTable(); return; }
   if(a==='homeBack'){ renderHome(''); top0(); return; }
-  if(a==='resume'){ resumeSaved().then(ok=>{ if(!ok) renderHome('That class is not there any more.'); }); return; }
+  if(a==='resume'){ resumeSaved().then(ok=>{ if(!ok) renderHome('That table is not there any more.'); }); return; }
   if(a==='forget'){ lsDel(SESS); renderHome(''); return; }
   if(a==='leave'){ goHome(''); return; }
   if(a==='zoom'){ showModal(`<img src="${IMG[b.dataset.n]}" alt=""><button class="btn ghost" data-act="mClose">Close</button>`); return; }
@@ -670,17 +611,11 @@ function onAct(b){
     if(a==='lock'){ if(cur.length!==5) return; saveMe({[key+'l']:1}); }
     keepScroll(render); return;
   }
-  if(a==='tNew'){ tCreate(); return; }
-  if(a==='tOpen'){ const c=(($('#tIn')||{}).value||'').trim().toUpperCase(); if(c.length===4){ lsSet('pt_tcode',c); tWatch(c); } return; }
-  if(a==='tClose'){ lsDel('pt_tcode'); if(TREF&&TCB) TREF.off('value',TCB); TCODE=null; TDATA=null; renderTeacher(); return; }
-  if(a==='tDelAsk'){ showModal(`<h3>Delete this class?</h3><p class="sub">All tables and stories will be removed. This cannot be undone.</p><button class="btn redo" data-act="tDel">Delete</button><button class="btn ghost" data-act="mClose">Cancel</button>`); return; }
-  if(a==='tDel'){ closeModal(); if(TREF) TREF.remove().then(()=>{ lsDel('pt_tcode'); TCODE=null; TDATA=null; renderTeacher(); }); return; }
   if(a==='mClose'){ closeModal(); return; }
 }
 
 /* ============ START ============ */
 async function boot(){
-  if(location.hash==='#teacher'){ renderTeacher(); return; }
   renderHome('');
   if(lsGet(SESS)&&FB_OK){ const ok=await resumeSaved(); if(!ok) renderHome(''); }
 }
