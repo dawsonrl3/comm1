@@ -23,16 +23,14 @@ button:disabled{opacity:.4;cursor:default}
 .btn{display:block;width:100%;background:var(--red);color:#fff;font-weight:900;font-size:23px;padding:15px 18px;border:3px solid var(--ink);border-radius:18px;box-shadow:0 5px 0 var(--ink);text-align:center}
 .btn:active:not(:disabled){transform:translateY(4px);box-shadow:0 1px 0 var(--ink)}
 .btn.gold{background:var(--gold);color:var(--ink)}
-.btn.teal{background:var(--teal);color:#fff}
 .btn.ghost{background:var(--paper);color:var(--ink);font-size:18px;padding:11px 14px;box-shadow:0 3px 0 var(--ink)}
-.btn.redo{background:var(--bad)}
 .card{background:var(--paper);border:3px solid var(--ink);border-radius:20px;box-shadow:0 5px 0 var(--ink);padding:16px;display:flex;flex-direction:column;gap:12px}
 .sub{color:var(--mute);font-size:19px;line-height:1.4;font-weight:800}
 .big{font-size:26px;line-height:1.3;font-weight:900}
 .center{text-align:center}
 .err{color:var(--bad);min-height:20px;font-size:17px;font-weight:900}
 label{font-size:14px;letter-spacing:2px;color:var(--mute);font-weight:900;display:block;margin-bottom:4px}
-input[type=text],input[type=tel]{width:100%;background:#fff;border:3px solid var(--ink);color:var(--ink);border-radius:14px;padding:12px 14px;font:inherit;font-size:24px;font-weight:900;outline:none}
+input[type=text]{width:100%;background:#fff;border:3px solid var(--ink);color:var(--ink);border-radius:14px;padding:12px 14px;font:inherit;font-size:24px;font-weight:900;outline:none}
 input:focus{box-shadow:0 0 0 4px var(--gold)}
 .hero{display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px 0 0}
 .hero .em{font-size:62px;line-height:1}
@@ -91,18 +89,6 @@ input:focus{box-shadow:0 0 0 4px var(--gold)}
 .rs .chg img{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold)}
 .rl{font-size:14px;letter-spacing:1.5px;color:var(--mute);font-weight:900;margin:8px 0 4px;display:flex;justify-content:space-between}
 .rl b{color:var(--ink)}
-.score{font-family:'Fredoka',sans-serif;font-size:64px;text-align:center;line-height:1}
-.score small{font-size:26px;color:var(--mute)}
-.lb{display:flex;flex-direction:column;gap:6px}
-.lbr{display:flex;align-items:center;gap:10px;background:#fff;border:3px solid var(--ink);border-radius:12px;padding:8px 12px;font-size:20px}
-.lbr.me{background:var(--gold)}
-.lbr b{width:30px;text-align:center;font-family:'Fredoka',sans-serif}
-.lbr span{flex:1}.lbr i{font-style:normal;font-family:'Fredoka',sans-serif;font-size:24px}
-.tgrid{display:flex;flex-direction:column;gap:8px}
-.tb{background:#fff;border:3px solid var(--ink);border-radius:14px;padding:10px}
-.tb h4{margin:0 0 6px;font-family:'Fredoka',sans-serif;font-size:20px;display:flex;justify-content:space-between}
-.tb .cs{display:grid;grid-template-columns:1fr 1fr;gap:4px 8px;font-size:15px}
-.tb .cs div{display:flex;gap:6px;align-items:baseline}.tb .cs b{color:var(--rc)}.tb .cs small{color:var(--mute);font-weight:800}
 #modal{position:fixed;inset:0;background:rgba(29,26,43,.82);display:flex;align-items:center;justify-content:center;padding:18px;z-index:50}
 #modal .box{background:var(--paper);border:3px solid var(--ink);border-radius:22px;padding:18px;display:flex;flex-direction:column;gap:12px;max-width:400px;width:100%}
 #modal h3{font-family:'Fredoka',sans-serif;font-size:26px}
@@ -168,25 +154,25 @@ const sentIdx = (sid,code) => /[1-5]/.test(code) ? (+code-1) : STY[sid].dec[code
 const vbHtml = s => esc(s).replace(/\(([^)]+)\)/g,'<span class="vb">($1)</span>');
 const verbsOf = s => { const o=[]; s.replace(/\(([^)]+)\)/g,(m,v)=>{o.push(v);}); return o; };
 
-/* ============ SEATS ============ */
+/* ============ TABLES & TURNS ============ */
+// A table has 2, 3 or 4 players. Player A starts the table; the others join and get B, C, D in order.
+// A "ring" is a group that takes turns: ring[0] goes first and each player tells the next one.
 const ALL = ['A','B','C','D'];
 const RC = {A:'#F2573E',B:'#12A594',C:'#F5A400',D:'#6C5CE7'};
-// Table sizes 2, 3 or 4. A "ring" is a group that takes turns: ring[0] goes first, each player tells the next one.
 const RINGS = {
-  2:{r1:[['A','B']], r2:[['A','B']], r3:[['A','B']]},   // 2 players: Round 3 = two brand-new stories (C and D)
+  2:{r1:[['A','B']], r2:[['A','B']], r3:[['A','B']]},            // 2 players: Round 3 = two new stories (C and D)
   3:{r1:[['A','B','C']], r2:[['A','B','C']], r3:[['A','B','C']]},
   4:{r1:[['A','B'],['C','D']], r2:[['A','B'],['C','D']], r3:[['A','C'],['B','D']]}
 };
+const SEATING = {2:'A, B',3:'A, B, C',4:'A, B, D, C'};
 const rolesOf = n => ALL.slice(0,n);
-const ringOf = (N,rd,role) => (RINGS[N][rd]||[]).find(g=>g.includes(role)) || null;
+const ringOf = (N,rd,role) => RINGS[N][rd].find(g=>g.includes(role));
 const nextIn = (g,r) => g[(g.indexOf(r)+1)%g.length];
 const prevIn = (g,r) => g[(g.indexOf(r)+g.length-1)%g.length];
 const SR2 = (r,N) => prevIn(ringOf(N,'r2',r),r);              // story I build in Round 2 (told by the person before me)
-const told3 = (r,N) => N===2 ? (r==='A'?'C':'D') : SR2(r,N);  // story I tell in Round 3 (2 players: a new story, C or D)
+const told3 = (r,N) => N===2 ? (r==='A'?'C':'D') : SR2(r,N);  // story I tell in Round 3 (2 players: C or D, new)
 const SR3 = (r,N) => told3(prevIn(ringOf(N,'r3',r),r),N);     // story I build in Round 3
-const lastLock = N => 'r3l';
-const SEATING = {2:'A, B',3:'A, B, C',4:'A, B, D, C'};
-const ORD = ['lobby','r1','r2i','r2','r3i','r3','rev'];
+const ORD = ['lobby','r1','r2i','r2','r3i','r3','rev'];       // phases, in order
 
 /* ============ FIREBASE ============ */
 const firebaseConfig = {
@@ -203,95 +189,94 @@ let db=null, FB_OK=false;
 try{ firebase.initializeApp(firebaseConfig); db=firebase.database(); FB_OK=true; }catch(e){ console.error('Firebase init failed',e); }
 const ROOT='picture-tales';
 const TS=()=>firebase.database.ServerValue.TIMESTAMP;
+// One table = one room: /picture-tales/<CODE> = { created, size, seat:{A:pid,..}, p:{ pid:{name,role,ph,r1,r2,r2l,r3,r3l,h2,h3} } }
+// Each phone writes only its own player node.
 
 /* ============ STATE ============ */
 const qp = new URLSearchParams(location.search);
 const PID = qp.get('pid') || lsGet('pt_pid') || ('p'+Math.random().toString(36).slice(2,9));
 if(!qp.get('pid')) lsSet('pt_pid',PID);
 const SESS = 'pt_room_'+PID;
-let CODE=null, ROOMREF=null, ROOMCB=null, PL={}, ME=null;
-let UI={view:'home', role:lsGet('pt_role')||'', size:+(lsGet('pt_size')||0), err:'', help:{}, r1v:null, r1t:null, sig:''};
+let CODE=null, ROOMREF=null, ROOMCB=null, PL={}, SIZE=4, ME=null;
+let UI={size:+(lsGet('pt_size')||0), err:'', help:{}, r1v:null, r1t:null, sig:''};
+
+const NS = () => SIZE;
+const ordI = p => p ? ORD.indexOf(p.ph) : -1;
+const seat = role => { for(const k in PL){ if(PL[k] && PL[k].role===role) return k===PID?ME:PL[k]; } return null; };
+const label = p => p ? (p.role+' ('+esc(p.name)+')') : '';
+const myRing = rd => ringOf(SIZE,rd,ME.role);
+const groupOthers = g => g.filter(r=>r!==ME.role).map(r=>{ const p=seat(r); return p?label(p):r+' (not here yet)'; }).join(', ');
+const groupHere = g => g.every(r=>seat(r));
+const groupStarted = (g,idx) => g.every(r=>r===ME.role || (seat(r) && ordI(seat(r))>=idx));
+const startingNames = (g,idx) => g.filter(r=>r!==ME.role && (!seat(r)||ordI(seat(r))<idx)).join(', ');
 
 function saveMe(patch){
   Object.keys(patch).forEach(k=>{ ME[k]=patch[k]; });
   PL[PID]=ME;
   if(ROOMREF) ROOMREF.child('p/'+PID).update(patch).catch(e=>console.error(e));
 }
-const ordI = p => p ? ORD.indexOf(p.ph) : -1;
-function seat(role){
-  if(!ME) return null;
-  for(const k in PL){ const p=PL[k]; if(p && +p.table===+ME.table && p.role===role) return k===PID?ME:p; }
-  return null;
-}
-function tsize(t,src){ src=src||PL; for(const k in src){ const p=src[k]; if(p && +p.table===+t && p.size) return +p.size; } return 4; }
-const NS = () => ME ? tsize(ME.table) : 4;
-const myRing = rd => ringOf(NS(),rd,ME.role);
-const groupOthers = g => g.filter(r=>r!==ME.role).map(r=>{ const p=seat(r); return p?label(p):r+' (not here yet)'; }).join(', ');
-const groupHere = g => g.every(r=>seat(r));
-const groupStarted = (g,idx) => g.every(r=>r===ME.role || (seat(r) && ordI(seat(r))>=idx));
-const label = p => p ? (p.role+' ('+esc(p.name)+')') : '';
-
-const tableP = n => Object.keys(PL).map(k=>PL[k]).filter(p=>p && +p.table===+n);
 
 /* ============ SEEDED SHUFFLE ============ */
 function rng(seed){ let h=1779033703^seed.length; for(let i=0;i<seed.length;i++){ h=Math.imul(h^seed.charCodeAt(i),3432918353); h=h<<13|h>>>19; }
   return ()=>{ h=Math.imul(h^h>>>16,2246822507); h=Math.imul(h^h>>>13,3266489909); h^=h>>>16; return (h>>>0)/4294967296; }; }
 function shuf(arr,seed){ const a=arr.slice(), r=rng(seed); for(let i=a.length-1;i>0;i--){ const j=Math.floor(r()*(i+1)); const t=a[i]; a[i]=a[j]; a[j]=t; } return a; }
 
-/* ============ JOIN / ENTER ============ */
+/* ============ START / JOIN ============ */
 function homeErr(m){ UI.err=m||''; const e=$('#err'); if(e) e.textContent=UI.err; }
+const cleanName = () => ($('#inName').value||'').trim().replace(/\s+/g,' ');
 function newCode(){ const L='ABCDEFGHJKLMNPQRSTUVWXYZ'; let c=''; for(let i=0;i<4;i++) c+=L[Math.floor(Math.random()*L.length)]; return c; }
+
+// Player A: the game makes the code. A only types a name and picks the table size.
 async function startTable(){
   if(!FB_OK){ homeErr('No connection. Check your internet.'); return; }
-  const name=($('#inName').value||'').trim().replace(/\s+/g,' ');
+  const name=cleanName();
   if(!name){ homeErr('Type your name.'); return; }
   if(!UI.size){ homeErr('Choose how many players are at your table.'); return; }
   $('#goBtn').disabled=true;
   try{
     let code=null;
-    for(let i=0;i<12;i++){ const c=newCode(); const sn=await db.ref(ROOT+'/'+c).once('value'); if(!sn.exists()){ code=c; break; } }
+    for(let i=0;i<12 && !code;i++){ const c=newCode(); const sn=await db.ref(ROOT+'/'+c).once('value'); if(!sn.exists()) code=c; }
     if(!code){ homeErr('Could not make a code. Try again.'); $('#goBtn').disabled=false; return; }
     lsSet('pt_name',name); lsSet('pt_size',String(UI.size));
-    const me0={name, table:1, size:UI.size, role:'A', ph:'lobby', ts:TS()};
-    await db.ref(ROOT+'/'+code).set({created:TS(), size:UI.size, seat:{A:PID}, p:{[PID]:me0}});
-    enterClass(code);
+    await db.ref(ROOT+'/'+code).set({created:TS(), size:UI.size, seat:{A:PID}, p:{[PID]:{name, role:'A', ph:'lobby', ts:TS()}}});
+    enterTable(code);
   }catch(e){ console.error(e); homeErr('Could not start. Try again.'); $('#goBtn').disabled=false; }
 }
-async function joinClass(){
+
+// Players B, C, D: a name and the code. The next free letter is assigned automatically.
+async function joinTable(){
   if(!FB_OK){ homeErr('No connection. Check your internet.'); return; }
-  const name=($('#inName').value||'').trim().replace(/\s+/g,' ');
+  const name=cleanName();
   const code=($('#inCode').value||'').trim().toUpperCase();
   if(!name){ homeErr('Type your name.'); return; }
   if(code.length!==4){ homeErr('Type the 4-letter table code.'); return; }
   $('#goBtn').disabled=true;
   try{
-    const sn=await db.ref(ROOT+'/'+code).once('value');
-    const v=sn.val();
+    const v=(await db.ref(ROOT+'/'+code).once('value')).val();
     if(!v||!v.created){ homeErr('There is no table with this code.'); $('#goBtn').disabled=false; return; }
     lsSet('pt_name',name);
-    const N=+v.size||4;
-    if(v.p&&v.p[PID]){ enterClass(code); return; }     // already in this table
+    if(v.p&&v.p[PID]){ enterTable(code); return; }          // already at this table
     let role=null;
-    for(const r of rolesOf(N)){
-      if(r==='A') continue;
+    for(const r of rolesOf(+v.size||4).slice(1)){            // B, C, D ... first free seat wins
       let got=false;
       await db.ref(ROOT+'/'+code+'/seat/'+r).transaction(cur=>cur?undefined:PID,(e,committed)=>{ got=!!committed; });
       if(got){ role=r; break; }
     }
     if(!role){ homeErr('This table is full.'); $('#goBtn').disabled=false; return; }
-    await db.ref(ROOT+'/'+code+'/p/'+PID).set({name, table:1, size:N, role, ph:'lobby', ts:TS()});
-    enterClass(code);
+    await db.ref(ROOT+'/'+code+'/p/'+PID).set({name, role, ph:'lobby', ts:TS()});
+    enterTable(code);
   }catch(e){ console.error(e); homeErr('Could not join. Try again.'); $('#goBtn').disabled=false; }
 }
+
 function leaveSub(){ if(ROOMREF&&ROOMCB){ ROOMREF.off('value',ROOMCB); } ROOMREF=null; ROOMCB=null; }
-function enterClass(code){
+function enterTable(code){
   leaveSub(); CODE=code; lsSet(SESS,code); ROOMREF=db.ref(ROOT+'/'+code); let first=true;
   ROOMCB=ROOMREF.on('value',sn=>{
     const v=sn.val();
     if(!v||!v.created){ goHome('This table was closed.'); return; }
-    PL=v.p||{};
+    PL=v.p||{}; SIZE=+v.size||4;
     if(first){ first=false; ME=PL[PID]; if(!ME){ goHome('Please join again.'); return; } UI.sig=sigNow(); render(); return; }
-    if(!ME){ return; }
+    if(!ME) return;
     PL[PID]=ME;
     onPlayers();
   });
@@ -299,16 +284,13 @@ function enterClass(code){
 function goHome(msg){ leaveSub(); lsDel(SESS); CODE=null; ME=null; PL={}; UI.r1v=null; closeModal(); renderHome(msg||''); window.scrollTo(0,0); }
 async function resumeSaved(){
   const code=lsGet(SESS); if(!code||!FB_OK) return false;
-  try{ const sn=await db.ref(ROOT+'/'+code).once('value'); const v=sn.val(); if(v&&v.created&&v.p&&v.p[PID]){ enterClass(code); return true; } lsDel(SESS); }catch(e){}
+  try{ const v=(await db.ref(ROOT+'/'+code).once('value')).val(); if(v&&v.created&&v.p&&v.p[PID]){ enterTable(code); return true; } lsDel(SESS); }catch(e){}
   return false;
 }
-// Re-render only when something that this screen shows has changed.
+// Re-render only when something this screen shows has changed.
 function sigNow(){
   if(!ME) return '';
-  const t=tableP(ME.table).map(p=>[p.role,p.name,p.size||0,p.ph,p.r1||'',p.r2l||0,p.r3l||0,(p.r2l===1?p.r2:''),(p.r3l===1?p.r3:'')]);
-  let extra='';
-  if(ME.ph==='rev') extra=JSON.stringify(Object.keys(PL).map(k=>[PL[k].table,PL[k].role,PL[k].r3l||0,PL[k].r1||'',PL[k].r2l===1?PL[k].r2:'',PL[k].r3l===1?PL[k].r3:'']));
-  return JSON.stringify([ME.ph,t,extra]);
+  return JSON.stringify([ME.ph,Object.keys(PL).map(k=>{ const p=PL[k]; return [p.role,p.name,p.ph,p.r1||'',p.r2l||0,p.r3l||0,(p.r2l===1?p.r2:''),(p.r3l===1?p.r3:'')]; })]);
 }
 function onPlayers(){
   const s=sigNow(); if(s===UI.sig) return; UI.sig=s;
@@ -323,15 +305,14 @@ function topBar(){
 }
 const stageHead = (a,b) => `<div class="stage"><b>${a}</b><span>${b||''}</span></div>`;
 function seatGrid(){
-  const N=NS();
-  return `<div class="seats" style="grid-template-columns:repeat(${N===3?3:2},1fr)">`+rolesOf(N).map(r=>{ const p=seat(r); const me=p&&p===ME;
+  return `<div class="seats" style="grid-template-columns:repeat(${SIZE===3?3:2},1fr)">`+rolesOf(SIZE).map(r=>{ const p=seat(r); const me=p&&p===ME;
     return `<div class="seat ${p?'on':''} ${me?'me':''}" style="--rc:${RC[r]}"><b>${r}</b><span>${p?esc(p.name):'waiting…'}</span>${me?'<small>YOU</small>':''}</div>`; }).join('')+'</div>';
 }
 const waitCard = txt => `<div class="card"><div class="wait"><span class="dot"></span><span>${txt}</span></div></div>`;
+const pic = (sid,c) => sid.toLowerCase()+'_'+(/[1-5]/.test(c)?c:'x'+({a:1,b:2,c:3}[c]));   // image key of a picture code
 
 /* ============ SCREENS ============ */
 function renderHome(msg){
-  UI.view='home';
   const saved=lsGet(SESS);
   app.innerHTML=`
   <div class="hero"><div class="em">🖼️</div><h1 class="logo" style="font-size:50px">Picture Tales</h1><p class="sub center">Funny stories. Tell them. Build them.</p></div>
@@ -348,39 +329,35 @@ function renderHome(msg){
     <div><i>3</i><span>Pass it on. How did it change?</span></div>
   </div>`;
 }
-function sizeSegHtml(){ return [2,3,4].map(n=>`<button data-act="size" data-v="${n}" class="${UI.size===n?'on':''}">${n}</button>`).join(''); }
-function renderStart(msg){
-  UI.view='start';
+const seatHint = () => UI.size ? 'Sit around the table in this order: '+SEATING[UI.size]+'.' : '';
+function renderStart(){
   app.innerHTML=`
   <div class="hero"><div class="em">🙋</div><h1 class="logo" style="font-size:42px">Start a table</h1></div>
   <div class="card">
-    <p class="sub">You are player <b style="color:var(--ink)">A</b>. Your table-mates will type your table code.</p>
+    <p class="sub">You are player <b style="color:var(--ink)">A</b>. You will get a table code to share.</p>
     <div><label>YOUR NAME</label><input id="inName" type="text" maxlength="14" value="${esc(lsGet('pt_name')||'')}" autocomplete="off"></div>
-    <div><label>HOW MANY PLAYERS AT YOUR TABLE?</label><div class="seg" id="sizeSeg">${sizeSegHtml()}</div>
-    <p class="sub" id="seatHint" style="margin-top:8px;font-size:17px">${UI.size?'Sit around the table in this order: '+SEATING[UI.size]+'.':''}</p></div>
-    <p class="err" id="err">${esc(msg||UI.err||'')}</p>
+    <div><label>HOW MANY PLAYERS AT YOUR TABLE?</label><div class="seg" id="sizeSeg">${[2,3,4].map(n=>`<button data-act="size" data-v="${n}" class="${UI.size===n?'on':''}">${n}</button>`).join('')}</div>
+    <p class="sub" id="seatHint" style="margin-top:8px;font-size:17px">${seatHint()}</p></div>
+    <p class="err" id="err">${esc(UI.err)}</p>
     <button class="btn" id="goBtn" data-act="goStart">Make my table</button>
     <button class="btn ghost" data-act="homeBack">Back</button>
   </div>`;
 }
-function renderJoin(msg){
-  UI.view='join';
+function renderJoin(){
   app.innerHTML=`
   <div class="hero"><div class="em">🙋</div><h1 class="logo" style="font-size:42px">Join a table</h1></div>
   <div class="card">
     <div><label>YOUR NAME</label><input id="inName" type="text" maxlength="14" value="${esc(lsGet('pt_name')||'')}" autocomplete="off"></div>
     <div><label>TABLE CODE (FROM PLAYER A)</label><input id="inCode" type="text" maxlength="4" autocomplete="off" autocapitalize="characters" style="text-transform:uppercase;letter-spacing:8px;text-align:center"></div>
-    <p class="err" id="err">${esc(msg||UI.err||'')}</p>
-    <button class="btn" id="goBtn" data-act="go">Join table</button>
+    <p class="err" id="err">${esc(UI.err)}</p>
+    <button class="btn" id="goBtn" data-act="goJoin">Join table</button>
     <button class="btn ghost" data-act="homeBack">Back</button>
   </div>`;
 }
 function renderLobby(){
-  const g=myRing('r1'), N=NS();
-  const ready=rolesOf(N).every(r=>seat(r));
+  const g=myRing('r1');
+  const missing=rolesOf(SIZE).filter(r=>!seat(r)), ready=!missing.length;
   const mine=[0,1,2,3,4,5].filter(k=>g[k%g.length]===ME.role).map(k=>k+1);
-  const rule = 'You read scenes '+mine.join(', ')+'.';
-  const missing=rolesOf(N).filter(r=>!seat(r));
   app.innerHTML=`${topBar()}
   ${stageHead('YOUR TABLE','')}
   ${ready?'':`<div class="card center"><p class="sub">Table code</p><div class="code">${esc(CODE)}</div><p class="sub">${ME.role==='A'?'Tell your table-mates this code. They tap Join a table.':'Waiting for your table-mates…'}</p></div>`}
@@ -388,7 +365,7 @@ function renderLobby(){
   <div class="card">
     <h2 class="big">Round 1 · Build a comic</h2>
     <p class="sub">${g.length>2?'Your group':'Your partner'}: <b style="color:var(--ink)">${groupOthers(g)}</b></p>
-    <p class="sub">${g.length>2?'You take turns. One reads a sentence, the next player taps the matching picture.':'One of you reads a sentence. The other taps the matching picture.'} ${rule}</p>
+    <p class="sub">${g.length>2?'You take turns. One reads a sentence, the next player taps the matching picture.':'One of you reads a sentence. The other taps the matching picture.'} You read scenes ${mine.join(', ')}.</p>
     <button class="btn" data-act="startR1" ${ready?'':'disabled'}>${ready?'Start Round 1':'Waiting for '+missing.join(', ')+'…'}</button>
   </div>
   <button class="btn ghost" data-act="leave">Leave</button>`;
@@ -399,12 +376,12 @@ function r1Info(){
   const g=myRing('r1');
   const readerOf=k=>g[k%g.length], chooserOf=k=>g[(k+1)%g.length];
   const seg=(p,k)=>(((p&&p.r1)||'').split('.')[k])||'';
-  let R=0; while(R<6){ if(seg(seat(chooserOf(R)),R).includes('o')) R++; else break; }
+  let R=0; while(R<6){ if(seg(seat(chooserOf(R)),R).includes('o')) R++; else break; }   // scenes finished so far
   return {g,readerOf,chooserOf,seg,R};
 }
 function renderR1(){
   const I=r1Info();
-  if(!groupHere(I.g)||!groupStarted(I.g,1)){ app.innerHTML=`${topBar()}${stageHead('ROUND 1','BUILD A COMIC')}${waitCard('Waiting for '+(groupHere(I.g)?I.g.filter(r=>r!==ME.role&&ordI(seat(r))<1).join(', '):I.g.filter(r=>!seat(r)).join(', '))+' to tap Start…')}`; return; }
+  if(!groupHere(I.g)||!groupStarted(I.g,1)){ app.innerHTML=`${topBar()}${stageHead('ROUND 1','BUILD A COMIC')}${waitCard('Waiting for '+startingNames(I.g,1)+' to tap Start…')}`; return; }
   if(UI.r1v==null) UI.r1v=I.R;
   const k=UI.r1v;
   if(k<I.R){   // a scene was just finished: show it for a moment
@@ -420,59 +397,58 @@ function renderR1(){
     <button class="btn" data-act="toR2">Next: Round 2</button>`;
     return;
   }
-  const reader=I.readerOf(k)===ME.role;
-  if(reader){
-    const tried=I.seg(seat(I.chooserOf(k)),k);
-    const bad=tried.replace(/o/g,'').length;
+  const reader=I.readerOf(k), chooser=I.chooserOf(k);
+  if(reader===ME.role){
+    const bad=I.seg(seat(chooser),k).replace(/o/g,'').length;
     app.innerHTML=`${topBar()}${stageHead('ROUND 1','SCENE '+(k+1)+' / 6')}
     <div class="card"><label style="margin:0">YOU READ</label><p class="sentence">${vbHtml(R1S[k])}</p></div>
     <div class="say">Say it in the past. Don't show your phone.</div>
-    ${bad?`<div class="card" style="background:#FFE3E0"><p class="big">Not that one. Say it again, slowly.</p></div>`:waitCard(esc(I.chooserOf(k))+' is choosing…')}`;
+    ${bad?`<div class="card" style="background:#FFE3E0"><p class="big">Not that one. Say it again, slowly.</p></div>`:waitCard(esc(chooser)+' is choosing…')}`;
     return;
   }
-  if(I.chooserOf(k)!==ME.role){
+  if(chooser!==ME.role){   // 3-player table: this player waits for their turn
     app.innerHTML=`${topBar()}${stageHead('ROUND 1','SCENE '+(k+1)+' / 6')}
-    <div class="card center"><p class="big">${esc(I.readerOf(k))} reads.<br>${esc(I.chooserOf(k))} taps the picture.</p></div>
+    <div class="card center"><p class="big">${esc(reader)} reads.<br>${esc(chooser)} taps the picture.</p></div>
     <div class="say">Listen. Don't help!</div>
     ${waitCard('Your turn is next…')}`;
     return;
   }
-  const tried=I.seg(me(),k);
+  const tried=I.seg(ME,k);
   const order=shuf(['o','1','2'],PID+'-r1-'+k);
   app.innerHTML=`${topBar()}${stageHead('ROUND 1','SCENE '+(k+1)+' / 6')}
   <div class="say">Listen to your partner. Tap the picture.</div>
   ${order.map(c=>`<button class="opt ${tried.includes(c)?'no':''}" ${tried.includes(c)?'disabled':''} data-act="r1pick" data-c="${c}"><img src="${r1Img(k,c)}" alt=""></button>`).join('')}`;
 }
-function me(){ return ME; }
 
 /* ---------- Rounds 2 & 3 ---------- */
 function renderIntro(n){
   const g = myRing('r'+n);
-  const first = g[0]===ME.role?'You tell first.':g[0]+' tells first.';
-  const new2 = n===3 && NS()===2;
-  const body = new2 ? 'Two new stories! Look at your 5 new pictures and tell your story in the past. Then listen to your partner and build their story.' : n===2
-    ? 'Look at your 5 pictures and tell your story in the past. Then listen to your partner and build their story.'
-    : (NS()===3?'A new story! Tell the story you built, using your pictures. Then listen and build the next story.':'New partner! Tell the story you built, using your pictures. Then listen and build the new story.');
-  app.innerHTML=`${topBar()}${stageHead('ROUND '+n, n===2?'TELL YOUR STORY':(new2?'NEW STORIES':'PASS IT ON'))}
+  const newStories = n===3 && SIZE===2;
+  const body = n===2 ? 'Look at your 5 pictures and tell your story in the past. Then listen to your partner and build their story.'
+    : newStories ? 'Two new stories! Look at your 5 new pictures and tell your story in the past. Then listen to your partner and build their story.'
+    : SIZE===3 ? 'A new story! Tell the story you built, using your pictures. Then listen and build the next story.'
+    : 'New partner! Tell the story you built, using your pictures. Then listen and build the new story.';
+  const title = n===2 ? 'Tell your story' : newStories ? 'New stories' : 'Pass it on';
+  app.innerHTML=`${topBar()}${stageHead('ROUND '+n, title.toUpperCase())}
   ${n===3?seatGrid():''}
   <div class="card">
-    <h2 class="big">Round ${n} · ${n===2?'Tell your story':(new2?'New stories':'Pass it on')}</h2>
+    <h2 class="big">Round ${n} · ${title}</h2>
     <p class="sub">${g.length>2?'Your group':'Your partner'}: <b style="color:var(--ink)">${groupOthers(g)}</b></p>
     <p class="sub">${body}</p>
     ${g.length>2?`<p class="sub">Order: <b style="color:var(--ink)">${g.join(' → ')}</b>. Each player tells the next player.</p>`:''}
-    <p class="big" style="color:var(--red)">${first}</p>
+    <p class="big" style="color:var(--red)">${g[0]===ME.role?'You tell first.':g[0]+' tells first.'}</p>
     <button class="btn" data-act="startR${n}" ${groupHere(g)?'':'disabled'}>Start Round ${n}</button>
   </div>`;
 }
 function renderRound(n){
   const key='r'+n, lk=key+'l', hk='h'+n;
-  const g = myRing('r'+n), N=NS(), L=g.length, mi=g.indexOf(ME.role);
-  if(!groupHere(g)||!groupStarted(g,ORD.indexOf(key))){ app.innerHTML=`${topBar()}${stageHead('ROUND '+n,'')}${waitCard('Waiting for '+g.filter(r=>r!==ME.role&&(!seat(r)||ordI(seat(r))<ORD.indexOf(key))).join(', ')+' to tap Start…')}`; return; }
+  const g = myRing(key), L=g.length, mi=g.indexOf(ME.role);
+  if(!groupHere(g)||!groupStarted(g,ORD.indexOf(key))){ app.innerHTML=`${topBar()}${stageHead('ROUND '+n,'')}${waitCard('Waiting for '+startingNames(g,ORD.indexOf(key))+' to tap Start…')}`; return; }
+  // Phase j: g[j] tells g[j+1], who builds. A phase is finished when its builder has locked in.
   const locked=r=>{ const p=seat(r); return !!p && p[lk]===1; };
-  let ap=-1; for(let j=0;j<L;j++){ if(!locked(g[(j+1)%L])){ ap=j; break; } }   // active phase: g[ap] tells g[ap+1]
+  let ap=-1; for(let j=0;j<L;j++){ if(!locked(g[(j+1)%L])){ ap=j; break; } }
   const step = ap<0?'done':(ap===mi?'tell':(ap===(mi+L-1)%L?'build':'wait'));
-  const nxt=seat(nextIn(g,ME.role)), prv=seat(prevIn(g,ME.role));
-  const pa = step==='tell'?nxt:prv;
+  const pa = seat(step==='tell'?nextIn(g,ME.role):prevIn(g,ME.role));
   if(step==='done'){
     app.innerHTML=`${topBar()}${stageHead('ROUND '+n,'DONE')}
     <div class="card center"><div class="em" style="font-size:64px">✅</div><h2 class="big">Round ${n} finished!</h2><p class="sub">${n===2?'You will see how the stories changed at the end.':'Next: the big reveal!'}</p></div>
@@ -487,13 +463,13 @@ function renderRound(n){
     return;
   }
   if(step==='tell'){
-    const fresh = n===2 || N===2;   // telling an original story (Round 2, or the new stories in a 2-player Round 3)
-    const strip = fresh?'12345':((ME.r2&&ME.r2.length===5)?ME.r2:'12345');
-    const sid = n===2?ME.role:told3(ME.role,N);
+    const fresh = n===2 || SIZE===2;   // an original story (Round 2, or the new stories in a 2-player Round 3)
+    const strip = fresh ? '12345' : ((ME.r2&&ME.r2.length===5)?ME.r2:'12345');
+    const sid = n===2 ? ME.role : told3(ME.role,SIZE);
     const pics=strip.split('').map((c,i)=>{
-      const si=sentIdx(sid,c), s=STY[sid].s[si], open=UI.help[key+'_'+i];
-      const txt = fresh ? vbHtml(s) : verbsOf(s).map(v=>esc(v)).join(' · ');
-      return `<div><div class="pic"><b class="num">${i+1}</b><img class="zoom" data-act="zoom" data-n="${sid.toLowerCase()+'_'+(/[1-5]/.test(c)?c:'x'+({a:1,b:2,c:3}[c]))}" src="${imgOf(sid,c)}" alt=""></div>
+      const s=STY[sid].s[sentIdx(sid,c)], open=UI.help[key+'_'+i];
+      const txt = fresh ? vbHtml(s) : verbsOf(s).map(v=>esc(v)).join(' · ');   // full sentence, or only the base verbs
+      return `<div><div class="pic"><b class="num">${i+1}</b><img class="zoom" data-act="zoom" data-n="${pic(sid,c)}" src="${imgOf(sid,c)}" alt=""></div>
       <button class="helpbtn" data-act="help" data-k="${key}_${i}" data-hk="${hk}">${open?'Hide help':'Help'}</button>${open?`<div class="hp">${txt}</div>`:''}</div>`;
     }).join('');
     app.innerHTML=`${topBar()}${stageHead('ROUND '+n,'YOU TELL')}
@@ -503,7 +479,7 @@ function renderRound(n){
     return;
   }
   // build
-  const sid = n===2?SR2(ME.role,N):SR3(ME.role,N);
+  const sid = n===2 ? SR2(ME.role,SIZE) : SR3(ME.role,SIZE);
   const cur=(ME[key]||'');
   const pool=shuf(CODES,PID+'-'+key);
   const slots=[0,1,2,3,4].map(i=>{ const c=cur.charAt(i);
@@ -519,28 +495,26 @@ function renderRound(n){
 
 /* ---------- Reveal ---------- */
 function renderReveal(){
-  const t=tableP(ME.table), N=NS(), LK=lastLock(N);
-  const missing=rolesOf(N).filter(r=>!t.some(p=>p.role===r&&p[LK]===1));
+  const missing=rolesOf(SIZE).filter(r=>{ const p=seat(r); return !p||p.r3l!==1; });
   if(missing.length){
     app.innerHTML=`${topBar()}${stageHead('REVEAL','')}${waitCard('Waiting for '+missing.join(', ')+' to finish Round 3…')}`;
     return;
   }
-  const by=r=>t.find(p=>p.role===r);
-  const rows=(N===2?['A','B','C','D']:rolesOf(N)).map(sid=>{
-    if(N===2 && 'CD'.includes(sid)){   // the two new stories of Round 3
-      const tl=sid==='C'?'A':'B', bd=by(nextIn(ringOf(2,'r3',tl),tl));
-      const strip=(str)=>`<div class="rs">${str.split('').map((c,i)=>`<div class="${c==='12345'[i]?'same':'chg'}"><img class="zoom" data-act="zoom" data-n="${sid.toLowerCase()+'_'+(/[1-5]/.test(c)?c:'x'+({a:1,b:2,c:3}[c]))}" src="${imgOf(sid,c)}" alt=""></div>`).join('')}</div>`;
-      return `<div class="card"><h3 class="big">${esc(STY[sid].title)}</h3>
-        <div class="rl"><b>ORIGINAL</b><span>${esc(by(tl).name)}</span></div>${strip('12345')}
-        <div class="rl"><b>AFTER ROUND 3</b><span></span></div>${strip(bd.r3)}</div>`;
+  const strip=(sid,str)=>`<div class="rs">${str.split('').map((c,i)=>`<div class="${c==='12345'[i]?'same':'chg'}"><img class="zoom" data-act="zoom" data-n="${pic(sid,c)}" src="${imgOf(sid,c)}" alt=""></div>`).join('')}</div>`;
+  const label3 = (t,s) => `<div class="rl"><b>${t}</b><span>${s||''}</span></div>`;
+  const stories = SIZE===2 ? ['A','B','C','D'] : rolesOf(SIZE);
+  const rows=stories.map(sid=>{
+    // who told the original, and who built it in each round
+    const teller = 'CD'.includes(sid)&&SIZE===2 ? (sid==='C'?'A':'B') : sid;
+    let html=`<div class="card"><h3 class="big">${esc(STY[sid].title)}</h3>${label3('ORIGINAL',esc(seat(teller).name))}${strip(sid,'12345')}`;
+    if(SIZE===2&&teller!==sid){   // new story of a 2-player Round 3
+      html+=label3('AFTER ROUND 3')+strip(sid,seat(nextIn(ringOf(2,'r3',teller),teller)).r3);
+    }else{
+      const b2=nextIn(ringOf(SIZE,'r2',sid),sid);
+      html+=label3('AFTER ROUND 2')+strip(sid,seat(b2).r2);
+      if(SIZE>=3) html+=label3('AFTER ROUND 3')+strip(sid,seat(nextIn(ringOf(SIZE,'r3',b2),b2)).r3);
     }
-    const b2r=nextIn(ringOf(N,'r2',sid),sid), b2=by(b2r);
-    const b3=N>=3?by(nextIn(ringOf(N,'r3',b2r),b2r)):null;
-    const strip=(str)=>`<div class="rs">${str.split('').map((c,i)=>`<div class="${c==='12345'[i]?'same':'chg'}"><img class="zoom" data-act="zoom" data-n="${sid.toLowerCase()+'_'+(/[1-5]/.test(c)?c:'x'+({a:1,b:2,c:3}[c]))}" src="${imgOf(sid,c)}" alt=""></div>`).join('')}</div>`;
-    return `<div class="card"><h3 class="big">${esc(STY[sid].title)}</h3>
-      <div class="rl"><b>ORIGINAL</b><span>${esc(by(sid).name)}</span></div>${strip('12345')}
-      <div class="rl"><b>AFTER ROUND 2</b><span></span></div>${strip(b2.r2)}
-      ${b3?`<div class="rl"><b>AFTER ROUND 3</b><span></span></div>${strip(b3.r3)}`:''}</div>`;
+    return html+'</div>';
   }).join('');
   app.innerHTML=`${topBar()}${stageHead('REVEAL','THE STORIES')}
   <div class="card center"><h2 class="big">How did the stories change?</h2>
@@ -552,7 +526,6 @@ function renderReveal(){
 
 function render(){
   if(!ME){ renderHome(''); return; }
-  UI.view='play';
   const ph=ME.ph;
   if(ph==='lobby') renderLobby();
   else if(ph==='r1') renderR1();
@@ -577,18 +550,17 @@ function keepScroll(fn){ const y=window.scrollY; fn(); window.scrollTo(0,y); }
 function top0(){ window.scrollTo(0,0); }
 function onAct(b){
   const a=b.dataset.act;
-  if(a==='size'){ UI.size=+b.dataset.v;
-    document.querySelectorAll('#sizeSeg button').forEach(x=>x.classList.toggle('on',x===b));
-    const sh=$('#seatHint'); if(sh) sh.textContent='Sit around the table in this order: '+SEATING[UI.size]+'.'; return; }
-  if(a==='go'){ joinClass(); return; }
-  if(a==='joinGo'){ renderJoin(''); top0(); return; }
-  if(a==='startGo'){ renderStart(''); top0(); return; }
+  if(a==='size'){ UI.size=+b.dataset.v; document.querySelectorAll('#sizeSeg button').forEach(x=>x.classList.toggle('on',x===b)); $('#seatHint').textContent=seatHint(); return; }
+  if(a==='startGo'){ UI.err=''; renderStart(); top0(); return; }
+  if(a==='joinGo'){ UI.err=''; renderJoin(); top0(); return; }
   if(a==='goStart'){ startTable(); return; }
+  if(a==='goJoin'){ joinTable(); return; }
   if(a==='homeBack'){ renderHome(''); top0(); return; }
   if(a==='resume'){ resumeSaved().then(ok=>{ if(!ok) renderHome('That table is not there any more.'); }); return; }
   if(a==='forget'){ lsDel(SESS); renderHome(''); return; }
   if(a==='leave'){ goHome(''); return; }
   if(a==='zoom'){ showModal(`<img src="${IMG[b.dataset.n]}" alt=""><button class="btn ghost" data-act="mClose">Close</button>`); return; }
+  if(a==='mClose'){ closeModal(); return; }
   if(a==='startR1'){ saveMe({ph:'r1'}); render(); top0(); return; }
   if(a==='r1pick'){
     const I=r1Info(), k=UI.r1v; if(k==null||k>=6||k<I.R) return;
@@ -603,24 +575,21 @@ function onAct(b){
   if(a==='toRev'){ saveMe({ph:'rev'}); render(); top0(); return; }
   if(a==='help'){ const k=b.dataset.k; const opening=!UI.help[k]; UI.help[k]=opening; if(opening){ const hk=b.dataset.hk; saveMe({[hk]:(ME[hk]||0)+1}); } keepScroll(render); return; }
   if(a==='bp'||a==='bx'||a==='lock'){
-    const n=ME.ph==='r2'?2:3, key='r'+n;
-    let cur=ME[key]||'';
+    const key = ME.ph==='r2' ? 'r2' : 'r3';
+    const cur=ME[key]||'';
     if(ME[key+'l']===1) return;
     if(a==='bp'){ const c=b.dataset.c; if(cur.length<5&&!cur.includes(c)) saveMe({[key]:cur+c}); }
     if(a==='bx'){ const i=+b.dataset.i; saveMe({[key]:cur.slice(0,i)+cur.slice(i+1)}); }
     if(a==='lock'){ if(cur.length!==5) return; saveMe({[key+'l']:1}); }
     keepScroll(render); return;
   }
-  if(a==='mClose'){ closeModal(); return; }
 }
 
 /* ============ START ============ */
-async function boot(){
+(async function boot(){
   renderHome('');
   if(lsGet(SESS)&&FB_OK){ const ok=await resumeSaved(); if(!ok) renderHome(''); }
-}
-boot();
-window.addEventListener('hashchange',()=>{ location.reload(); });
+})();
 
 </script>
 </body>
